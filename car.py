@@ -10,6 +10,8 @@ from vehiclemodels.vehicle_dynamics_mb import vehicle_dynamics_mb
 from matplotlib import cm
 import matplotlib.pyplot as plt
 import numpy as np
+import shapely.geometry as geom
+
 
 from scipy.integrate import odeint
 
@@ -17,12 +19,12 @@ class Car:
     def __init__(self, track):
         self.parameters = parameters_vehicle2()
         # self.state = init_ks([0, 0, 0, 20, 0])
-        self.state = init_st([0, 0, 0, 3, 0, 0,0])
+        self.state = init_st([40, 10, 0, 10, 0, 0,0])
         # self.state = init_mb([419, 136, 0, 5, 0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0], self.parameters)
         self.time = 0 #TODO:
         self.tControlSequence = 0.2  # [s] How long is a control input applied
         self.tEulerStep = 0.01 # [s] One step of solving the ODEINT
-        self.tHorizon = 5 # [s] How long should routes be calculated
+        self.tHorizon = 4 # [s] How long should routes be calculated
         self.history = [] #Hostory of real car states
         self.simulated_history = [] #Hostory of simulated car states
         self.track = track #Track waypoints for drawing
@@ -76,6 +78,24 @@ class Car:
         return self.simulated_history
 
     '''
+    calculates the cost of a certain trajectory
+    '''
+    def cost_function(self, trajectory, waypoint_index):
+
+        #Next 30 points of the track
+        track = geom.LineString(self.track.waypoints[waypoint_index: waypoint_index + 30])
+
+        cost = 0
+        factor = 1
+        for state in trajectory:
+            simulated_position = geom.Point(state[0],state[1])
+            distance_to_track = simulated_position.distance(track)
+            cost += factor * distance_to_track
+
+        return cost
+
+
+    '''
     Moves the "real" car one step due to a given control input
     '''
     def step(self, control_input):
@@ -87,24 +107,53 @@ class Car:
         self.state = x_next[-1]
         self.history.append(x_next)
 
-    def draw_simulated_history(self):
+    def draw_simulated_history(self, waypoint_index = 0):
 
         plt.clf()
+
+        fig, position_ax = plt.subplots()
+        # fig, axs = plt.subplots(2)
+        # position_ax = axs[0]
+        # velocity_ax = axs[1]
+
         s_x = []
         s_y = []
+        costs = []
         for trajectory in self.simulated_history:
+            cost = self.cost_function(trajectory, waypoint_index)
             for state in trajectory:
-                s_x.append(state[0])
-                s_y.append(state[1])
+                if(state[0] > 1):
+                    s_x.append(state[0])
+                    s_y.append(state[1])
+                    costs.append(cost)
+                   
 
         index = 0
-        # for state in self.simulated_history:
-        color_index = format(int(255) , '02x') 
-        color = "#5500%s" % (color_index)
-        plt.scatter(s_x,s_y, c=color)
-        index += 1
+        trajectory_costs = position_ax.scatter(s_x,s_y, c=costs)
+        colorbar = fig.colorbar(trajectory_costs)
+        colorbar.set_label('Trajectory costs')
 
+        #Draw waypoints
+        w_x = self.track.waypoints_x[waypoint_index:waypoint_index+20]
+        w_y = self.track.waypoints_y[waypoint_index:waypoint_index+20]
+        position_ax.scatter(w_x,w_y, c ="#000000", label="Next waypoints")
+
+
+        #Draw car position
+        p_x = self.state[0]
+        p_y = self.state[1]
+        print("car state: ", self.state)
+        position_ax.scatter(p_x,p_y, c ="#FF0000", label="Current car position")
+
+
+        #Plot car state
+        # velocity_ax.bar(range(5),  self.state[2:])
+        # velocity_ax.set_xticklabels(["Delta", "Speed", "Phi", "Phi Dot", "Beta"])
+
+        index += 1
+        fig.legend(loc='upper center')
         plt.savefig('sim_history.png')
+        return plt
 
     def draw_history(self):
         plt.clf()
