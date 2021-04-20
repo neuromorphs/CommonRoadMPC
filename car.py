@@ -90,6 +90,9 @@ class Car:
         for state in trajectory:
             simulated_position = geom.Point(state[0],state[1])
             distance_to_track = simulated_position.distance(track)
+            
+            # closest_waypoint_index = self.track.get_closest_index([state[0], state[1]])
+
             cost += factor * distance_to_track
 
         return cost
@@ -115,6 +118,10 @@ class Car:
         # fig, axs = plt.subplots(2)
         # position_ax = axs[0]
         # velocity_ax = axs[1]
+
+        plt.title("Model Predictive Path Integral")
+        plt.xlabel("Position x [m]")
+        plt.ylabel("Position y [m]")
 
         s_x = []
         s_y = []
@@ -151,7 +158,7 @@ class Car:
         # velocity_ax.set_xticklabels(["Delta", "Speed", "Phi", "Phi Dot", "Beta"])
 
         index += 1
-        fig.legend(loc='upper center')
+        fig.legend()
         plt.savefig('sim_history.png')
         return plt
 

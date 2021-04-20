@@ -33,6 +33,19 @@ class Track:
         print("waypoint index", waypoint_index)        
         return math.sqrt(min_distance)
 
+    def get_closest_index(self, p):
+
+        min_distance = 100000
+        waypoint_index = 0
+        for i in range(len(self.waypoints_x)):
+            waypoint = [self.waypoints_x[i], self.waypoints_y[i]]
+            dist = squared_distance(p, waypoint)
+            if(dist < min_distance):
+                min_distance = dist
+                waypoint_index = i
+        return waypoint_index
+    
+
     def distance_to_waypoint(self, p, waypoint_index):
         waypoint = [self.waypoints_x[waypoint_index], self.waypoints_y[waypoint_index]]
         dist = squared_distance(p, waypoint)
