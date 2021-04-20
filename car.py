@@ -11,6 +11,7 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 import numpy as np
 import shapely.geometry as geom
+import math
 
 
 from scipy.integrate import odeint
@@ -19,7 +20,7 @@ class Car:
     def __init__(self, track):
         self.parameters = parameters_vehicle2()
         # self.state = init_ks([0, 0, 0, 20, 0])
-        self.state = init_st([40, 10, 0, 10, 0, 0,0])
+        self.state = init_st([39.6, 15.6, 0, 10, 0, 0,0])
         # self.state = init_mb([419, 136, 0, 5, 0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0], self.parameters)
         self.time = 0 #TODO:
         self.tControlSequence = 0.2  # [s] How long is a control input applied
@@ -83,18 +84,27 @@ class Car:
     def cost_function(self, trajectory, waypoint_index):
 
         #Next 30 points of the track
-        track = geom.LineString(self.track.waypoints[waypoint_index: waypoint_index + 30])
+        waypoint_modulus = self.track.waypoints.copy()
+        waypoint_modulus.extend(waypoint_modulus)
 
-        cost = 0
-        factor = 1
+        track = geom.LineString(waypoint_modulus[waypoint_index: waypoint_index + 107])
+
+        distance_cost = 0
+        speed_cost = 0
+
+        distance_cost_weight = 1
+        speed_cost_weight = 10000
+
         for state in trajectory:
             simulated_position = geom.Point(state[0],state[1])
             distance_to_track = simulated_position.distance(track)
-            
-            # closest_waypoint_index = self.track.get_closest_index([state[0], state[1]])
+            speed = state[3]
+            speed_cost += speed
+            distance_cost +=  distance_to_track
 
-            cost += factor * distance_to_track
-
+        speed_cost = 1 /speed_cost
+        # print("Spooedcost", speed_cost * speed_cost_weight)
+        cost = distance_cost_weight * distance_cost + speed_cost_weight * speed_cost
         return cost
 
 
@@ -149,7 +159,7 @@ class Car:
         #Draw car position
         p_x = self.state[0]
         p_y = self.state[1]
-        print("car state: ", self.state)
+        # print("car state: ", self.state)
         position_ax.scatter(p_x,p_y, c ="#FF0000", label="Current car position")
 
 
@@ -158,7 +168,7 @@ class Car:
         # velocity_ax.set_xticklabels(["Delta", "Speed", "Phi", "Phi Dot", "Beta"])
 
         index += 1
-        fig.legend()
+        
         plt.savefig('sim_history.png')
         return plt
 
@@ -180,8 +190,11 @@ class Car:
         index = 0
         color_index = format(int(255) , '02x') 
         color = "#5500%s" % (color_index)
-        plt.scatter(s_x,s_y, c=velocity, cmap = cm.jet)
+        scatter = plt.scatter(s_x,s_y, c=velocity, cmap = cm.jet)
         index += 1
+
+        colorbar = plt.colorbar(scatter)
+        colorbar.set_label('speed')
 
         plt.savefig('history.png')
     

@@ -13,10 +13,10 @@ def squared_distance(p1, p2):
 class Track:
 
     def __init__(self):
-        # self.waypoints_x = 0.1 * np.array(oval_points_x)
-        # self.waypoints_y = 0.1 *  np.array(oval_points_y)
-        self.waypoints_x = 0.1 * np.array(track_2_points_x)
-        self.waypoints_y = 0.1 *  np.array(track_2_points_y)
+        self.waypoints_x = 0.1 * np.array(oval_points_x)
+        self.waypoints_y = 0.1 *  np.array(oval_points_y)
+        # self.waypoints_x = 0.1 * np.array(track_2_points_x)
+        # self.waypoints_y = 0.1 *  np.array(track_2_points_y)
         self.waypoints = [[self.waypoints_x[i], self.waypoints_y[i]] for i in range(len(self.waypoints_x))]
 
 

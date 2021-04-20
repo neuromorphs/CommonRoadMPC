@@ -1,33 +1,23 @@
 import numpy as np
-
-from cycler import cycler
 import math
-import matplotlib.pyplot as plt
-from scipy.interpolate import interp1d
-
 from car import Car
 from track import Track
 from constants import *
+import matplotlib.pyplot as plt
+# a = [1,2,3,4,5,6]
+# a.extend(a)
+# print(a)
 
-import shapely.geometry as geom
+# exit()
 
 def column(matrix, i):
         return [row[i] for row in matrix]
         
 
-# coords = [[coords_x[i], coords_y[i]] for i in range(len(coords_x))]
-# print(coords)
-# # coords = [[1,1], [2,1], [3,1]] 
-# line = geom.LineString(coords)
-# point = geom.Point(5,3)
-# print (point.distance(line))
 
-# exit()
-
-
-COVARIANCE = [[0.1, 0], [0, 0]] 
+COVARIANCE = [[0.1, 0], [0, 0.05]] 
 NUMBER_OF_TRAJECTORIES = 50
-DIST_TOLLERANCE = 8
+DIST_TOLLERANCE = 4
 
 
 def sample_control_inputs(control_input):
@@ -37,7 +27,7 @@ def sample_control_inputs(control_input):
 
     control_input_sequences = [0]*len(x)
     for i in range(len(x)):
-        control_input_sequences[i] = 20*[[round(x[i],3), round(y[i], 3)]]
+        control_input_sequences[i] = 10*[[round(x[i],3), round(y[i], 3)]]
     return control_input_sequences
 
 
@@ -63,7 +53,7 @@ last_control_input = [0,0]
 
 for i in range(200):
 
-    input_samples = u_dist
+    # input_samples = u_dist
     input_samples = sample_control_inputs(last_control_input)
     simulated_history = car.simulate_trajectory_distribution( input_samples )
 
@@ -88,12 +78,10 @@ for i in range(200):
 
 
     best_input = input_samples[best_index]
-
     inputs = np.array(column(input_samples,0))
-    print("Input samples",inputs)
-
-
-    print("Best input", best_input)
+   
+    # print("Input samples",inputs)
+    # print("Best input", best_input)
     
 
 
@@ -111,9 +99,9 @@ for i in range(200):
     # print( "total_weight", total_weight)
 
     weighted_avg_input = u_sum/total_weight
-    print("weighted avg input",  weighted_avg_input)
 
 
+   
     # exit()
     next_control_input = weighted_avg_input
     
@@ -134,9 +122,33 @@ for i in range(200):
     last_control_input = next_control_input
     last_control_input[0] = min(last_control_input[0], 1)
     last_control_input[1] = min(last_control_input[1], 0.5)
-    # print(car.state[3])
+
+    print(car.state[3])
+    
+
+    weighted_avg_trajectory = car.simulate_trajectory([next_control_input] *10)
+    print("next ctr input",  next_control_input)
+   
+    print("weighted_avg_trajectory",weighted_avg_trajectory)
+
+    plt = car.draw_simulated_history(waypoint_index)
+
+    weighted_avg_trajectories = car.simulated_history[-1]
+    t_x = []
+    t_y =[]
+    for trajectory in weighted_avg_trajectories:
+        t_x.append(trajectory[0])
+        t_y.append(trajectory[1])
+    print("Trajectory", t_x)
+
+    plt.scatter(t_x, t_y, c='#D94496', label="Weighted Average Solution")
+    fig = plt.gcf()
+    plt.legend(  fancybox=True, shadow=True, loc="best")
+    plt.savefig("weighted_avt_and_history.png")
+
+
     car.step(next_control_input)
-    car.draw_simulated_history(waypoint_index)
+
     car.draw_history()
 
 car.draw_history()
