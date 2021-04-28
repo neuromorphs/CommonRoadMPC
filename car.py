@@ -20,10 +20,13 @@ from scipy.integrate import odeint
 
 class Car:
     def __init__(self, track):
+
+        initial_position = track.initial_position
+
         self.parameters = parameters_vehicle2()
         # self.state = init_ks([0, 0, 0, 20, 0])
-        self.state = init_st([39.6, 15.6, 0, 13, 0, 0,0])
-        # self.state = init_std([39.6, 15.6, 0, 6, 0, 0,0], p= self.parameters)
+        # self.state = init_st([39.6, 15.6, 0, 13, 0, 0,0])
+        self.state = init_std([initial_position[0], initial_position[1], 0, 6, 0, 0,0], p= self.parameters)
         # self.state = init_mb([419, 136, 0, 5, 0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0], self.parameters)
         self.time = 0 #TODO:
         self.tControlSequence = 0.2  # [s] How long is a control input applied
@@ -38,8 +41,8 @@ class Car:
     '''
     def func_KS(self,x, t, u, p):
         # f = vehicle_dynamics_ks(x, u, p)
-        f = vehicle_dynamics_st(x, u, p)
-        # f = vehicle_dynamics_std(x, u, p)
+        # f = vehicle_dynamics_st(x, u, p)
+        f = vehicle_dynamics_std(x, u, p)
         # f = vehicle_dynamics_mb(x, u, p)
         return f
 

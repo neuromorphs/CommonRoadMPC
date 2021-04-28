@@ -10,7 +10,7 @@ from vehiclemodels.vehicle_dynamics_ks import vehicle_dynamics_ks
 from matplotlib import cm
 
 
-EULER_STEP = 0.05
+EULER_STEP = 0.1
 
 def column(matrix, i):
         return [row[i] for row in matrix]
@@ -102,27 +102,27 @@ print(end - start)
 plt.scatter(column(x, 0), column(x,1), c="#00FF00", label="Euler")
 
 
-plt.clf()
 
-
-for atol in [1e-2, 2e-2, 3e-2, 4e-2, 5e-2,6e-2,7e-2,8e-2, 1e-1, 1.5e-1,1]:
-    x0_KS = init_ks(initialState)
-    start = time.time()
-    for i in range(number_of_test_runs):
-        x = []
-        x0_KS[0] = x0_KS[0] + 0.1
-        x0_KS[1] = x0_KS[1] + 0.1
-        x0_KS[3] = x0_KS[3] + 0.001
-        x = ivp(func_KS, x0_KS, t, atol = atol/100, rtol= atol)
-    end = time.time()
-    print("TIME FOR IVP with atol = ", atol)
-    print(round(end - start, 4))
-    x = x.y
-    plt.scatter(x[0], x[1], c="#123123", label = atol)
+x0_KS = init_ks(initialState)
+start = time.time()
+for i in range(number_of_test_runs):
+    x = []
+    x0_KS[0] = x0_KS[0] + 0.1
+    x0_KS[1] = x0_KS[1] + 0.1
+    x0_KS[3] = x0_KS[3] + 0.001
+    x = ivp(func_KS, x0_KS, t)
+end = time.time()
+print("TIME FOR IVP with atol = ")
+print(round(end - start, 4))
+x = x.y
+plt.scatter(x[0], x[1], c="#FF0000", label = "IVP")
 
 
 
 plt.legend()
+plt.xlabel("Position x [m]")
+plt.ylabel("Position y [m]")
+
 plt.savefig("T.png")
 
 

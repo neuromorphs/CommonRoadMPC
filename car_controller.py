@@ -10,6 +10,10 @@ from vehiclemodels.vehicle_dynamics_st import vehicle_dynamics_st
 from vehiclemodels.vehicle_dynamics_std import vehicle_dynamics_std
 from vehiclemodels.vehicle_dynamics_mb import vehicle_dynamics_mb
 
+from multiprocessing import Pool
+import time
+
+
 from matplotlib import cm
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,9 +23,10 @@ import math
 
 from scipy.integrate import odeint
 
-COVARIANCE = [[0.1, 0], [0, 0.05]] 
+COVARIANCE = [[0.2, 0], [0, 0.05]] 
 NUMBER_OF_TRAJECTORIES = 50
 DIST_TOLLERANCE = 4
+M_TO_PIXEL = 0.2
 
 def column(matrix, i):
         return [row[i] for row in matrix]
@@ -44,8 +49,8 @@ class CarController:
     def __init__(self, car):
         self.parameters = parameters_vehicle2()
         # self.state = init_ks([0, 0, 0, 20, 0])
-        self.state = init_st([39.6, 15.6, 0, 13, 0, 0,0])
-        # self.state = init_std([39.6, 15.6, 0, 6, 0, 0,0], p= self.parameters)
+        # self.state = init_st([39.6, 15.6, 0, 13, 0, 0,0])
+        self.state = init_std([39.6, 15.6, 0, 10, 0, 0,0], p= self.parameters)
         # self.state = init_mb([419, 136, 0, 5, 0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0], self.parameters)
         self.time = 0 #TODO:
         self.tControlSequence = 0.2  # [s] How long is a control input applied
@@ -65,8 +70,8 @@ class CarController:
     '''
     def func_KS(self,x, t, u, p):
         # f = vehicle_dynamics_ks(x, u, p)
-        f = vehicle_dynamics_st(x, u, p)
-        # f = vehicle_dynamics_std(x, u, p)
+        # f = vehicle_dynamics_st(x, u, p)
+        f = vehicle_dynamics_std(x, u, p)
         # f = vehicle_dynamics_mb(x, u, p)
         return f
 
@@ -80,8 +85,8 @@ class CarController:
     '''
     def simulate_step(self, state, control_input):
         t = np.arange(0, self.tControlSequence, self.tEulerStep) 
-        # x_next = solveEuler(self.func_KS, state, t, args=(control_input, self.parameters))
-        x_next = odeint(self.func_KS, state, t, args=(control_input, self.parameters))
+        x_next = solveEuler(self.func_KS, state, t, args=(control_input, self.parameters))
+        # x_next = odeint(self.func_KS, state, t, args=(control_input, self.parameters))
         return x_next[-1]
 
     '''
@@ -98,17 +103,27 @@ class CarController:
         for control_input in control_inputs:
             simulated_state = self.simulate_step(simulated_state, control_input)
             simulated_trajectory.append(simulated_state)
-        self.simulated_history.append(simulated_trajectory)
-        return simulated_state
+        # self.simulated_history.append(simulated_trajectory)
+        return simulated_trajectory
+
+
+    def f(self,x):
+        return 2*x
 
 
     def simulate_trajectory_distribution(self, control_inputs_distrubution):
         self.simulated_history = []
+        # start = time.time()
+        result = []
+        with Pool(5) as p:
+            result = p.map(self.simulate_trajectory, 
+            control_inputs_distrubution) 
+        self.simulated_history = result
+        # end = time.time()
+        # print("TIME FOR 50 Trajectories")
+        # print(end - start)
 
-
-        for control_inputs in control_inputs_distrubution:
-            step = self.simulate_trajectory(control_inputs)
-        return self.simulated_history
+        return result
 
     '''
     Returns a gaussian distribution around the last control input
@@ -120,7 +135,7 @@ class CarController:
 
         control_input_sequences = [0]*len(x)
         for i in range(len(x)):
-            control_input_sequences[i] = 8*[[round(x[i],3), round(y[i], 3)]]
+            control_input_sequences[i] = 20*[[round(x[i],3), round(y[i], 3)]]
         return control_input_sequences
 
 
@@ -129,11 +144,11 @@ class CarController:
     '''
     def cost_function(self, trajectory):
 
-        #Next 30 points of the track
-
+        #TODO only Next 30 points of the track
+        
+        max_distance = 5
         
         waypoint_modulus = self.track.waypoints.copy()
-        waypoint_modulus.extend(waypoint_modulus)
 
         track = geom.LineString(self.track.waypoints)
 
@@ -143,14 +158,26 @@ class CarController:
 
         distance_cost_weight = 1
         speed_cost_weight = 100
-        progress_cost_weight =200
+        progress_cost_weight =100
+
+        number_of_critical_states = 10
+
+        index = 0
+        number_of_states = len(trajectory) 
 
         for state in trajectory:
+            discount = (number_of_states - 0.5 * index) / number_of_states
+
             simulated_position = geom.Point(state[0],state[1])
             distance_to_track = simulated_position.distance(track)
             speed = state[3]
-            speed_cost += speed
-            distance_cost +=  distance_to_track
+            speed_cost += discount * speed
+            distance_cost += discount * distance_to_track
+            if(distance_to_track > max_distance):
+                if(index < number_of_critical_states):
+                    distance_cost += 100
+                    print("Potential crash during critical distance")
+            index += 1
 
         original_car_position = geom.Point(self.state[0],self.state[1])
         progress = original_car_position.distance(simulated_position)
@@ -158,8 +185,7 @@ class CarController:
 
         speed_cost = 1 /speed_cost
         progress_cost = 1/progress
-        # print("Progress cost", progress_cost_weight * progress_cost)
-        # print("Spooedcost", speed_cost * speed_cost_weight)
+
         cost = distance_cost_weight * distance_cost + speed_cost_weight * speed_cost + progress_cost_weight * progress_cost
 
         return cost
@@ -167,11 +193,13 @@ class CarController:
     '''
     Does one step of control and returns the best control input for the next time step
     '''
-    def control_step(self, last_control_input):
-        last_control_input[0] = min(last_control_input[0], 1)
-        last_control_input[1] = min(last_control_input[1], 0.5)
+    def control_step(self):
 
-        input_samples = self.sample_control_inputs(last_control_input)
+        self.last_control_input[0] = min(self.last_control_input[0], 1)
+        self.last_control_input[1] = min(self.last_control_input[1], 0.5)
+
+        # input_samples = u_dist
+        input_samples = self.sample_control_inputs(self.last_control_input)
         simulated_history = self.simulate_trajectory_distribution( input_samples )
 
         trajectory_index = 0    
@@ -202,7 +230,7 @@ class CarController:
         for i in range (len(weights)):
             total_weight += weights[i]
             u_sum = np.add(u_sum, weights[i] * inputs[i])
-        print( u_sum)
+        # print( u_sum)
         # print( "total_weight", total_weight)
 
         weighted_avg_input = u_sum/total_weight
@@ -212,7 +240,7 @@ class CarController:
         return next_control_input
 
 
-    def draw_simulated_history(self, waypoint_index = 0):
+    def draw_simulated_history(self, waypoint_index = 0, chosen_trajectory = []):
 
         plt.clf()
 
@@ -247,6 +275,7 @@ class CarController:
         colorbar.set_label('Trajectory costs')
 
         #Draw waypoints
+        waypoint_index = self.track.get_closest_index(self.state[:2])
         w_x = self.track.waypoints_x[waypoint_index:waypoint_index+20]
         w_y = self.track.waypoints_y[waypoint_index:waypoint_index+20]
         position_ax.scatter(w_x,w_y, c ="#000000", label="Next waypoints")
@@ -258,6 +287,17 @@ class CarController:
         # print("car state: ", self.state)
         position_ax.scatter(p_x,p_y, c ="#FF0000", label="Current car position")
 
+        #Plot Chosen Trajectory
+        t_x = []
+        t_y =[]
+        for state in chosen_trajectory:
+            t_x.append(state[0])
+            t_y.append(state[1])
+
+        plt.scatter(t_x, t_y, c='#D94496', label="Weighted Average Solution")
+        # fig = plt.gcf()
+        plt.legend(  fancybox=True, shadow=True, loc="best")
+        # plt.savefig("weighted_avt_and_history.png")
 
         #Plot car state
         # velocity_ax.bar(range(5),  self.state[2:])
@@ -279,7 +319,7 @@ class CarController:
         self.set_state(self.car.car_state)
         next_control_input = self.control_step(self.last_control_input)
         # self.draw_simulated_history()
-        print("NEXT CONTROL",  next_control_input)
+        # print("NEXT CONTROL",  next_control_input)
         self.last_control_input = next_control_input
         
         self.car_command.steering = next_control_input[0]
