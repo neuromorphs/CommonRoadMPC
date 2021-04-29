@@ -3,14 +3,16 @@ import numpy as np
 
 from constants import *
 
-M_TO_PIXEL = 0.1
+#Scale of the race track
+M_TO_PIXEL = 0.2
 
 def squared_distance(p1, p2):
     squared_distance = abs(p1[0] - p2[0]) ** 2 + abs(p1[1] - p2[1]) ** 2
     return squared_distance
 
-
-
+'''
+Represents the "real track", calculated by the l2race server
+'''
 class Track:
 
     def __init__(self):

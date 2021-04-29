@@ -18,6 +18,9 @@ import math
 
 from scipy.integrate import odeint
 
+'''
+Represents the "real car", calculated by the l2race server
+'''
 class Car:
     def __init__(self, track):
 
@@ -25,8 +28,8 @@ class Car:
 
         self.parameters = parameters_vehicle2()
         # self.state = init_ks([0, 0, 0, 20, 0])
-        # self.state = init_st([39.6, 15.6, 0, 13, 0, 0,0])
-        self.state = init_std([initial_position[0], initial_position[1], 0, 6, 0, 0,0], p= self.parameters)
+        self.state = init_st([39.6, 15.6, 0, 13, 0, 0,0])
+        # self.state = init_std([initial_position[0], initial_position[1], 0, 7, 0, 0,0], p= self.parameters)
         # self.state = init_mb([419, 136, 0, 5, 0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0], self.parameters)
         self.time = 0 #TODO:
         self.tControlSequence = 0.2  # [s] How long is a control input applied
@@ -37,12 +40,12 @@ class Car:
 
 
     '''
-    Dynamics of the car (Kinematic Single Track)
+    Dynamics of the real car
     '''
     def func_KS(self,x, t, u, p):
         # f = vehicle_dynamics_ks(x, u, p)
-        # f = vehicle_dynamics_st(x, u, p)
-        f = vehicle_dynamics_std(x, u, p)
+        f = vehicle_dynamics_st(x, u, p)
+        # f = vehicle_dynamics_std(x, u, p)
         # f = vehicle_dynamics_mb(x, u, p)
         return f
 
@@ -61,6 +64,9 @@ class Car:
         self.history.append(x_next)
 
 
+    """
+    draws the history (position and speed) of the car into a plot
+    """    
     def draw_history(self):
         plt.clf()
         plt.scatter(self.track.waypoints_x,self.track.waypoints_y)
