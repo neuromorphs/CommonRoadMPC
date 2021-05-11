@@ -4,7 +4,7 @@ import numpy as np
 from constants import *
 
 #Scale of the race track
-M_TO_PIXEL = 0.2
+M_TO_PIXEL = 0.1
 
 def squared_distance(p1, p2):
     squared_distance = abs(p1[0] - p2[0]) ** 2 + abs(p1[1] - p2[1]) ** 2

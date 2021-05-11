@@ -22,7 +22,7 @@ from scipy.integrate import odeint
 Represents the "real car", calculated by the l2race server
 '''
 class Car:
-    def __init__(self, track):
+    def __init__(self,track = []):
 
         initial_position = track.initial_position
 

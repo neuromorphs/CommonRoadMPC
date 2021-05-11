@@ -27,10 +27,12 @@ import math
 from scipy.integrate import odeint
 
 #Covariance Matrix for the input distribution
-COVARIANCE = [[0.4, 0], [0, 0.2]] 
+INITIAL_COVARIANCE = [[0.4, 0], [0, 0.0]] 
+
+STEP_COVARIANCE = [[0.3,0],[0,0]]
 
 #Number of trajectories that are calculated for every step
-NUMBER_OF_TRAJECTORIES = 50
+NUMBER_OF_TRAJECTORIES = 100
 
 #With of the race track (ToDo)
 DIST_TOLLERANCE = 4 
@@ -141,13 +143,22 @@ class CarController:
     Returns a gaussian distribution around the last control input
     '''
     def sample_control_inputs(self, last_control_input):
-        x, y = np.random.multivariate_normal(last_control_input, COVARIANCE, NUMBER_OF_TRAJECTORIES).T
-        # plt.plot(x, y, 'x')
-        # plt.savefig('input_distribution.png')
+        initial_steering, initial_acceleration = np.random.multivariate_normal(last_control_input, INITIAL_COVARIANCE, NUMBER_OF_TRAJECTORIES).T
 
-        control_input_sequences = [0]*len(x)
-        for i in range(len(x)):
-            control_input_sequences[i] = 20*[[round(x[i],3), round(y[i], 3)]]
+        control_input_sequences = [0]*len(initial_steering)
+        for i in range(len(initial_steering)):
+            last_control_input = [initial_steering[i], initial_acceleration[i]]
+            control_input_sequences[i] = []
+            next_control_input = [round(initial_steering[i],3), round(initial_acceleration[i], 3)] 
+            # next_control_input = [0, 0]
+            for j in range(20):
+
+                step_steering, step_acceleration = np.random.multivariate_normal(last_control_input, STEP_COVARIANCE).T
+                
+                control_input_sequences[i].append([step_steering, step_acceleration])
+                next_control_input[0] = step_steering
+                next_control_input[1] = step_acceleration
+
         return control_input_sequences
 
 
@@ -163,7 +174,7 @@ class CarController:
         waypoint_modulus.extend(waypoint_modulus[:30])
 
         closest_to_car_position = self.track.get_closest_index(self.state[:2])
-        waypoint_modulus = waypoint_modulus[closest_to_car_position: closest_to_car_position+ 30]
+        waypoint_modulus = waypoint_modulus[closest_to_car_position: closest_to_car_position+ 50]
 
         track = geom.LineString(waypoint_modulus)
 
@@ -172,8 +183,8 @@ class CarController:
         progress_cost = 0
 
         distance_cost_weight = 1
-        speed_cost_weight = 100
-        progress_cost_weight =100
+        speed_cost_weight = 400
+        progress_cost_weight =500
 
         number_of_critical_states = 10
 
@@ -310,7 +321,7 @@ class CarController:
             t_x.append(state[0])
             t_y.append(state[1])
 
-        plt.scatter(t_x, t_y, c='#D94496', label="Weighted Average Solution")
+        plt.scatter(t_x, t_y, c='#D94496', label="Static control")
         plt.legend(  fancybox=True, shadow=True, loc="best")
 
         
