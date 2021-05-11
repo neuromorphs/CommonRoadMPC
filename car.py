@@ -1,4 +1,9 @@
 
+import sys
+
+sys.path.insert(0, './commonroad-vehicle-models/PYTHON/')
+
+
 from vehiclemodels.init_ks import init_ks
 from vehiclemodels.init_st import init_st
 from vehiclemodels.init_std import init_std
@@ -28,7 +33,7 @@ class Car:
 
         self.parameters = parameters_vehicle2()
         # self.state = init_ks([0, 0, 0, 20, 0])
-        self.state = init_st([39.6, 15.6, 0, 13, 0, 0,0])
+        self.state = init_st([39.6, 15.6, 0, 8, 0, 0,0])
         # self.state = init_std([initial_position[0], initial_position[1], 0, 7, 0, 0,0], p= self.parameters)
         # self.state = init_mb([419, 136, 0, 5, 0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0], self.parameters)
         self.time = 0 #TODO:

@@ -1,3 +1,4 @@
+.vscode/*
 *.csv
 *.pyc
 test.py
