@@ -1,3 +1,5 @@
+import sys
+sys.path.insert(0, './commonroad-vehicle-models/PYTHON/')
 
 from vehiclemodels.init_ks import init_ks
 from vehiclemodels.init_st import init_st
@@ -27,16 +29,25 @@ import math
 from scipy.integrate import odeint
 
 #Covariance Matrix for the input distribution
-INITIAL_COVARIANCE = [[0.4, 0], [0, 0.0]] 
+INITIAL_COVARIANCE = [[0.0, 0], [0, 0.0]] 
 
-STEP_COVARIANCE = [[0.3,0],[0,0]]
+#Covariance matrix for every next-step in the trajectory prediction
+STEP_COVARIANCE = [[0.05,0],[0,2]]
+NUMBER_OF_STEPS_PER_TRAJECTORY = 30
+
+# Must be between 0 and 1 and defines how close to a random walk the trajectories are
+# 0: The trajectories are calculated by a completely random control with mean = 0 and variance = step_covariance0 
+# 1: The trajectories are a random walk with mean = last control and variance = step_covariance
+RANDOM_WALK = 0
 
 #Number of trajectories that are calculated for every step
-NUMBER_OF_TRAJECTORIES = 100
+NUMBER_OF_TRAJECTORIES = 1000
 
 #With of the race track (ToDo)
 DIST_TOLLERANCE = 4 
 
+DRAW_CHOSEN_SEQUENCE = True
+DRAW_TRAJECTORIES = False
 
 def column(matrix, i):
         return [row[i] for row in matrix]
@@ -151,9 +162,13 @@ class CarController:
             control_input_sequences[i] = []
             next_control_input = [round(initial_steering[i],3), round(initial_acceleration[i], 3)] 
             # next_control_input = [0, 0]
-            for j in range(20):
+            for j in range(NUMBER_OF_STEPS_PER_TRAJECTORY):
 
-                step_steering, step_acceleration = np.random.multivariate_normal(last_control_input, STEP_COVARIANCE).T
+                zero_control_input = np.array([0,0])
+                last_control_input = np.array(last_control_input)
+                mean_next_control_input = RANDOM_WALK * zero_control_input + (1 - RANDOM_WALK) * last_control_input
+
+                step_steering, step_acceleration = np.random.multivariate_normal(mean_next_control_input, STEP_COVARIANCE).T
                 
                 control_input_sequences[i].append([step_steering, step_acceleration])
                 next_control_input[0] = step_steering
@@ -171,10 +186,10 @@ class CarController:
         
         # only Next 30 points of the track
         waypoint_modulus = self.track.waypoints.copy()
-        waypoint_modulus.extend(waypoint_modulus[:30])
+        waypoint_modulus.extend(waypoint_modulus[:50])
 
         closest_to_car_position = self.track.get_closest_index(self.state[:2])
-        waypoint_modulus = waypoint_modulus[closest_to_car_position: closest_to_car_position+ 50]
+        waypoint_modulus = waypoint_modulus[closest_to_car_position: closest_to_car_position+ 30]
 
         track = geom.LineString(waypoint_modulus)
 
@@ -252,6 +267,8 @@ class CarController:
             trajectory_index += 1
 
         best_input = input_samples[best_index]
+        # print("Best input", best_input)
+        return best_input
         inputs = np.array(column(input_samples,0))
 
 
@@ -296,16 +313,11 @@ class CarController:
                     costs.append(cost)
                     indices.append(ind)
                     ind += 1
-                   
-        trajectory_costs = position_ax.scatter(s_x,s_y, c=indices)
-        colorbar = fig.colorbar(trajectory_costs)
-        colorbar.set_label('Trajectory costs')
 
-        #Draw waypoints
-        waypoint_index = self.track.get_closest_index(self.state[:2])
-        w_x = self.track.waypoints_x[waypoint_index:waypoint_index+20]
-        w_y = self.track.waypoints_y[waypoint_index:waypoint_index+20]
-        position_ax.scatter(w_x,w_y, c ="#000000", label="Next waypoints")
+        if(DRAW_TRAJECTORIES):
+            trajectory_costs = position_ax.scatter(s_x,s_y, c=indices)
+            colorbar = fig.colorbar(trajectory_costs)
+            colorbar.set_label('Trajectory costs')
 
 
         #Draw car position
@@ -314,15 +326,21 @@ class CarController:
         # print("car state: ", self.state)
         position_ax.scatter(p_x,p_y, c ="#FF0000", label="Current car position")
 
+        #Draw waypoints
+        waypoint_index = self.track.get_closest_index(self.state[:2])
+        w_x = self.track.waypoints_x[waypoint_index:waypoint_index+30]
+        w_y = self.track.waypoints_y[waypoint_index:waypoint_index+30]
+        position_ax.scatter(w_x,w_y, c ="#000000", label="Next waypoints")
+
         #Plot Chosen Trajectory
         t_x = []
         t_y =[]
         for state in chosen_trajectory:
             t_x.append(state[0])
             t_y.append(state[1])
-
-        plt.scatter(t_x, t_y, c='#D94496', label="Static control")
-        plt.legend(  fancybox=True, shadow=True, loc="best")
+        if(DRAW_CHOSEN_SEQUENCE):
+            plt.scatter(t_x, t_y, c='#D94496', label="Chosen control")
+            plt.legend(  fancybox=True, shadow=True, loc="best")
 
         
         plt.savefig('sim_history.png')

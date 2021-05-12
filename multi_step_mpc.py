@@ -14,22 +14,32 @@ waypoint_index = 1
 last_control_input = [0,0]
 
 
+
 for i in range(150):
 
-    next_control_input = car_controller.control_step()
-    chosen_trajectory = car_controller.simulate_trajectory([next_control_input] *20)
-
-    # print("Next control", next_control_input)
+    next_control_sequence = car_controller.control_step()
+    chosen_trajectory = car_controller.simulate_trajectory(next_control_sequence)
 
     # Comment this out for speedup
-    # car_controller.draw_simulated_history(waypoint_index,chosen_trajectory)
+    car_controller.draw_simulated_history(waypoint_index,chosen_trajectory)
 
-    car.step(next_control_input)
+    #Do the first step of the best control sequence
+    car.step(next_control_sequence[0])
+    #Update car state
     car_controller.set_state(car.state)
 
+
+    print(i)
+    car.save_history()
     car.draw_history()
 
+   
+
 car.draw_history()
+car.save_history()
+
+# print(history)
+# exit()
 
 
 

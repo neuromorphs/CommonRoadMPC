@@ -1,8 +1,6 @@
 
 import sys
-
 sys.path.insert(0, './commonroad-vehicle-models/PYTHON/')
-
 
 from vehiclemodels.init_ks import init_ks
 from vehiclemodels.init_st import init_st
@@ -33,13 +31,14 @@ class Car:
 
         self.parameters = parameters_vehicle2()
         # self.state = init_ks([0, 0, 0, 20, 0])
-        self.state = init_st([39.6, 15.6, 0, 8, 0, 0,0])
+        self.state = init_st([initial_position[0], initial_position[1], 0, 9, 0, 0,0])
         # self.state = init_std([initial_position[0], initial_position[1], 0, 7, 0, 0,0], p= self.parameters)
         # self.state = init_mb([419, 136, 0, 5, 0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0], self.parameters)
         self.time = 0 #TODO:
         self.tControlSequence = 0.2  # [s] How long is a control input applied
         self.tEulerStep = 0.01
-        self.history = [] #Hostory of real car states
+        self.state_history = [] #Hostory of real car states
+        self.control_history = [] #History of controls applied every timestep
         self.track = track #Track waypoints for drawing
 
 
@@ -66,7 +65,20 @@ class Car:
         self.time += self.tControlSequence
         # print(self.time)
         self.state = x_next[-1]
-        self.history.append(x_next)
+        self.state_history.append(x_next)
+        self.control_history.append(control_input)
+
+
+
+    def save_history(self):
+        # print("Saving history...")
+        control_history = np.array(self.control_history)
+        np.savetxt("control_history.csv", control_history, delimiter=",")
+
+        state_history = np.array(self.state_history)
+        state_history = state_history.reshape(state_history.shape[0] * state_history.shape[1],7)
+        np.savetxt("car_state_history.csv", state_history, delimiter=",")
+
 
 
     """
@@ -81,7 +93,7 @@ class Car:
         s_y = []
         velocity = []
     
-        for trajectory in self.history:
+        for trajectory in self.state_history:
             for state in trajectory:
                 s_x.append(state[0])
                 s_y.append(state[1])

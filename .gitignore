@@ -1,4 +1,6 @@
 .vscode/*
+.vscode
 *.csv
+__pycache__
 *.pyc
 test.py
