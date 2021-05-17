@@ -15,7 +15,7 @@ last_control_input = [0,0]
 
 
 
-for i in range(150):
+for i in range(200):
 
     next_control_sequence = car_controller.control_step()
     chosen_trajectory = car_controller.simulate_trajectory(next_control_sequence)

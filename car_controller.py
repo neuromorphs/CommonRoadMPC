@@ -29,25 +29,25 @@ import math
 from scipy.integrate import odeint
 
 #Covariance Matrix for the input distribution
-INITIAL_COVARIANCE = [[0.0, 0], [0, 0.0]] 
+INITIAL_COVARIANCE = [[0.01, 0], [0, 0.1]] 
 
 #Covariance matrix for every next-step in the trajectory prediction
-STEP_COVARIANCE = [[0.05,0],[0,2]]
+STEP_COVARIANCE = [[0.1,0],[0,0]]
 NUMBER_OF_STEPS_PER_TRAJECTORY = 30
 
 # Must be between 0 and 1 and defines how close to a random walk the trajectories are
 # 0: The trajectories are calculated by a completely random control with mean = 0 and variance = step_covariance0 
 # 1: The trajectories are a random walk with mean = last control and variance = step_covariance
-RANDOM_WALK = 0
+RANDOM_WALK = 0.0
 
 #Number of trajectories that are calculated for every step
-NUMBER_OF_TRAJECTORIES = 1000
+NUMBER_OF_TRAJECTORIES = 100
 
-#With of the race track (ToDo)
+#With of the race track (ToDo) 
 DIST_TOLLERANCE = 4 
-
+INVERSE_TEMP = 10
 DRAW_CHOSEN_SEQUENCE = True
-DRAW_TRAJECTORIES = False
+DRAW_TRAJECTORIES = True
 
 def column(matrix, i):
         return [row[i] for row in matrix]
@@ -126,6 +126,7 @@ class CarController:
         simulated_trajectory = []
         for control_input in control_inputs:
             simulated_state = self.simulate_step(simulated_state, control_input)
+
             simulated_trajectory.append(simulated_state)
         return simulated_trajectory
 
@@ -138,15 +139,15 @@ class CarController:
     '''
     def simulate_trajectory_distribution(self, control_inputs_distrubution):
         self.simulated_history = []
-        # start = time.time()
+        start = time.time()
         result = []
-        with Pool(5) as p:
+        with Pool(8) as p:
             result = p.map(self.simulate_trajectory, 
             control_inputs_distrubution) 
         self.simulated_history = result
-        # end = time.time()
-        # print("TIME FOR 50 Trajectories")
-        # print(end - start)
+        end = time.time()
+        print("TIME FOR 50 Trajectories")
+        print(end - start)
 
         return result
 
@@ -174,7 +175,7 @@ class CarController:
                 next_control_input[0] = step_steering
                 next_control_input[1] = step_acceleration
 
-        return control_input_sequences
+        return np.array(control_input_sequences)
 
 
     '''
@@ -198,8 +199,8 @@ class CarController:
         progress_cost = 0
 
         distance_cost_weight = 1
-        speed_cost_weight = 400
-        progress_cost_weight =500
+        speed_cost_weight = 700
+        progress_cost_weight =700
 
         number_of_critical_states = 10
 
@@ -243,9 +244,9 @@ class CarController:
         self.last_control_input[0] = min(self.last_control_input[0], 1)
         self.last_control_input[1] = min(self.last_control_input[1], 0.5)
 
-        input_samples = self.sample_control_inputs(self.last_control_input)
+        control_sequences = self.sample_control_inputs(self.last_control_input)
         # input_samples = u_dist #those are the handcrafted inputs
-        simulated_history = self.simulate_trajectory_distribution( input_samples )
+        simulated_history = self.simulate_trajectory_distribution( control_sequences )
 
         trajectory_index = 0    
         lowest_cost = 100000
@@ -260,31 +261,20 @@ class CarController:
             if cost < lowest_cost:
                 best_index = trajectory_index
                 lowest_cost = cost
-            inverse_temp = 10
-            weight =  math.exp((-1/inverse_temp) * cost)
+            
+            weight =  math.exp((-1/INVERSE_TEMP) * cost)
             # print("Weight", weight)
             weights[trajectory_index] = weight
             trajectory_index += 1
 
-        best_input = input_samples[best_index]
-        # print("Best input", best_input)
-        return best_input
-        inputs = np.array(column(input_samples,0))
-
+        best_conrol_sequence = control_sequences[best_index]
 
         #Finding weighted avg input
-        u_sum = np.zeros(2)
-        total_weight = 0
-        for i in range (len(weights)):
-            total_weight += weights[i]
-            u_sum = np.add(u_sum, weights[i] * inputs[i])
-      
-
-        weighted_avg_input = u_sum/total_weight
-        next_control_input = weighted_avg_input
+        next_control_sequence = np.average(control_sequences,axis=0, weights=weights )
 
 
-        return next_control_input
+        return next_control_sequence
+        # return best_conrol_sequence
 
     """
     draws the simulated history (position and speed) of the car into a plot for a trajectory distribution resp. the history of all trajectory distributions
