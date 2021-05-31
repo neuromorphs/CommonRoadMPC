@@ -20,6 +20,7 @@ class Track:
         # self.waypoints_y = 0.1 *  np.array(oval_points_y)
         self.waypoints_x = M_TO_PIXEL * np.array(track_2_points_x)
         self.waypoints_y = M_TO_PIXEL *  np.array(track_2_points_y)
+        self.track_name = "Track 2"
         self.waypoints = [[self.waypoints_x[i], self.waypoints_y[i]] for i in range(len(self.waypoints_x))]
         self.initial_position = self.waypoints[0]
 

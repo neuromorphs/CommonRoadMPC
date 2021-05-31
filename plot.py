@@ -6,7 +6,7 @@ import math
 from numpy import genfromtxt
 
 
-control_history = genfromtxt('control_history.csv', delimiter=',')
+control_history = genfromtxt('ExperimentRecordings/control_history.csv', delimiter=',')
 print(control_history.shape)
 
 fig, axs = plt.subplots(2)
@@ -19,7 +19,7 @@ axs[1].plot(control_history[:,1])
 plt.savefig("control_histry.png")
 plt.clf()
 
-state_history = genfromtxt('car_state_history.csv', delimiter=',')
+state_history = genfromtxt('ExperimentRecordings/car_state_history.csv', delimiter=',')
 print(state_history.shape)
 
 fig, axs = plt.subplots(7)

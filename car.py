@@ -17,9 +17,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import shapely.geometry as geom
 import math
-
+import csv  
+from datetime import datetime
 
 from scipy.integrate import odeint
+
+
+PATH_TO_EXPERIMENT_RECORDINGS = "./ExperimentRecordings"
 
 '''
 Represents the "real car", calculated by the l2race server
@@ -31,7 +35,7 @@ class Car:
 
         self.parameters = parameters_vehicle2()
         # self.state = init_ks([0, 0, 0, 20, 0])
-        self.state = init_st([initial_position[0], initial_position[1], 0, 5, 0, 0,0])
+        self.state = init_st([initial_position[0], initial_position[1], 0, 8, 0, 0,0])
         # self.state = init_std([initial_position[0], initial_position[1], 0, 7, 0, 0,0], p= self.parameters)
         # self.state = init_mb([419, 136, 0, 5, 0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0], self.parameters)
         self.time = 0 #TODO:
@@ -71,13 +75,42 @@ class Car:
 
 
     def save_history(self):
-        # print("Saving history...")
+        print("Saving history...")
+        
+        
         control_history = np.array(self.control_history)
-        np.savetxt("control_history.csv", control_history, delimiter=",")
+        np.savetxt("ExperimentRecordings/control_history.csv", control_history, delimiter=",", header="x1,x2,x3,x4,x5,x6,x7")
 
+        header=["time", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "u1", "u2"]
         state_history = np.array(self.state_history)
         state_history = state_history.reshape(state_history.shape[0] * state_history.shape[1],7)
-        np.savetxt("car_state_history.csv", state_history, delimiter=",")
+        np.savetxt("ExperimentRecordings/car_state_history.csv", state_history, delimiter=",", header="x1,x2,x3,x4,x5,x6,x7")
+
+
+        cut_state_history = state_history[0::20]
+        now = datetime.now()
+        now = now.strftime("%Y-%m-%d %H:%M:%S")
+        print("Today's date:", now)
+        
+
+        with open('ExperimentRecordings/history-'+now+'.csv', 'w', encoding='UTF8') as f:
+            writer = csv.writer(f)
+
+
+            #Meta data
+            f.write("# Datetime: {} \n".format(now))
+            f.write("# Track: {} \n".format( self.track.track_name))
+            f.write("# Saving: {}\n".format("0.2s"))
+            f.write("# Model: {}\n".format("MPPI, Ground truth model"))
+
+            writer.writerow(header)
+            time = 0
+            for i in range(len(cut_state_history)):
+                state_and_control = np.append(cut_state_history[i],control_history[i])
+                time_state_and_control = np.append(time, state_and_control)
+                writer.writerow(time_state_and_control)
+                time = round(time+0.2, 2)
+
 
 
 
@@ -108,5 +141,8 @@ class Car:
         colorbar = plt.colorbar(scatter)
         colorbar.set_label('speed')
 
-        plt.savefig('history.png')
+        now = datetime.now()
+        now = now.strftime("%Y-%m-%d %H:%M:%S")
+
+        plt.savefig('ExperimentRecordings/history-{}.png'.format(now))
     
