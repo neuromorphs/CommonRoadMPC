@@ -14,8 +14,10 @@ from vehiclemodels.vehicle_dynamics_mb import vehicle_dynamics_mb
 
 from constants import *
 
+from scipy import signal
 from multiprocessing import Pool
 import time
+import csv
 
 
 from matplotlib import cm
@@ -33,7 +35,7 @@ INITIAL_COVARIANCE = [[0.0, 0], [0, 0.0]]
 
 #Covariance matrix for every next-step in the trajectory prediction
 STEP_COVARIANCE = [[0.2, 0],[0,0.1]]
-NUMBER_OF_STEPS_PER_TRAJECTORY = 30
+NUMBER_OF_STEPS_PER_TRAJECTORY = 20
 
 # Must be between 0 and 1 and defines how close to a random walk the trajectories are
 # 0: The trajectories are calculated by a completely random control with mean = 0 and variance = step_covariance0 
@@ -47,7 +49,7 @@ NUMBER_OF_INITIAL_TRAJECTORIES = 1000
 STRATEGY_COVARIANCE=[[0.01, 0],[0, 0.01]]   
 NUMBER_OF_TRAJECTORIES = 30
 
-NUMBER_OF_NEXT_WAYPOINTS = 50
+NUMBER_OF_NEXT_WAYPOINTS = 30
 
 #With of the race track (ToDo) 
 DIST_TOLLERANCE = 4 
@@ -95,7 +97,7 @@ class CarController:
         self.collect_speed_costs = []
         self.collect_progress_costs = []
         self.best_control_sequenct = initial_sequence
-        # self.best_control_sequenct = [] #initial_sequence
+        self.best_control_sequenct = [] #initial_sequence
         
         self.update_trackline()
        
@@ -137,8 +139,8 @@ class CarController:
     '''
     def simulate_step(self, state, control_input):
         t = np.arange(0, self.tControlSequence, self.tEulerStep) 
-        # x_next = solveEuler(self.func_KS, state, t, args=(control_input, self.parameters))
-        x_next = odeint(self.func_KS, state, t, args=(control_input, self.parameters))
+        x_next = solveEuler(self.func_KS, state, t, args=(control_input, self.parameters))
+        # x_next = odeint(self.func_KS, state, t, args=(control_input, self.parameters))
         return x_next[-1]
 
     '''
@@ -171,7 +173,7 @@ class CarController:
         simulated_position = geom.Point(simulated_state[:2])
         progress = original_car_position.distance(simulated_position)
         # print("Progress", progress)
-        progress_cost = 2000/progress
+        progress_cost = 200/progress
 
         # print("progress_cost", progress_cost)
         # print("Cost", cost)
@@ -235,6 +237,8 @@ class CarController:
 
     def sample_control_inputs_similar_to_last(self, last_control_sequence):
 
+        # start = time.time()
+       
         #Not initialized
         if(len(last_control_sequence) == 0):
             return self.sample_control_inputs([0,0])
@@ -242,21 +246,27 @@ class CarController:
         #Delete the first step of the last control sequence because it is already done
         #To keep the length of the control sequence add one to the end
         last_control_sequence = last_control_sequence[1:]
-        last_control_sequence = np.append(last_control_sequence, [0,0]).reshape(30,2)
-    
+        last_control_sequence = np.append(last_control_sequence, [0,0]).reshape(NUMBER_OF_STEPS_PER_TRAJECTORY,2)
 
-        control_input_sequences = []
+        last_steerings = last_control_sequence[:,0]
+        last_accelerations = last_control_sequence[:,1]
+
+        control_input_sequences = np.zeros([NUMBER_OF_TRAJECTORIES, NUMBER_OF_STEPS_PER_TRAJECTORY, 2])
 
         for i in range(NUMBER_OF_TRAJECTORIES):
-            next_control_inputs = []
-            
-            for control_input in last_control_sequence:
-                step_steering, step_acceleration = np.random.multivariate_normal(control_input, STRATEGY_COVARIANCE).T
-                next_control_inputs.append([step_steering, step_acceleration])
+            steering_noise, acceleration_noise = np.random.multivariate_normal([0,0], STRATEGY_COVARIANCE, NUMBER_OF_STEPS_PER_TRAJECTORY).T
 
-            control_input_sequences.append(next_control_inputs)
-
+            next_steerings = last_steerings + steering_noise
+            next_accelerations = last_accelerations  + acceleration_noise
+            next_control_inputs = np.vstack((next_steerings, next_accelerations)).T
+            control_input_sequences[i] = next_control_inputs
+     
         control_input_sequences = np.array(control_input_sequences)
+
+        # end = time.time()
+        # print("TIME FOR ROLLOUT")
+        # print(end - start)
+
         return control_input_sequences
         
     
@@ -264,7 +274,6 @@ class CarController:
     calculates the cost of a trajectory
     '''
     def cost_function(self, trajectory):
-
         max_distance = 5
         
         track = self.trackline
@@ -274,7 +283,7 @@ class CarController:
 
         distance_cost_weight = 1
         speed_cost_weight = 50
-        progress_cost_weight =200
+        progress_cost_weight =100
 
         number_of_critical_states = 10
 
@@ -308,9 +317,14 @@ class CarController:
 
         cost = distance_cost_weight * distance_cost + speed_cost_weight * speed_cost + progress_cost_weight * progress_cost
         # print("Cost", cost)
+
+    
+
         return cost
 
     def cost_per_step(self, state):
+        # start = time.time()
+
 
         max_distance = 5
         
@@ -331,13 +345,8 @@ class CarController:
         if(distance_to_track > max_distance):
             distance_cost += 100
             # print("Potential crash during critical distance")
-      
-
-        # original_car_position = geom.Point(self.state[0],self.state[1])
-        # progress = original_car_position.distance(simulated_position)
 
         speed_cost = 1 /speed_cost
-        # progress_cost = 1/progress
 
         self.collect_distance_costs.append(distance_cost)
         self.collect_speed_costs.append(speed_cost)
@@ -347,6 +356,10 @@ class CarController:
         # print("CostPerStep", cost)
         cost = max(0,min(cost, 100))
         # print("Cost_per_step", cost)
+
+        # end = time.time()
+        # print("TIME FOR COST PER STEP")
+        # print(end - start)
         return cost
 
 
@@ -390,9 +403,14 @@ class CarController:
 
         #Finding weighted avg input
         next_control_sequence = np.average(control_sequences,axis=0, weights=weights )
-        
+        next_control_sequence = signal.medfilt(next_control_sequence, [1, 1])
+
+        # print("next_control_sequence",next_control_sequence)
+
         self.best_control_sequenct = next_control_sequence
         
+
+
         return next_control_sequence
         # return best_conrol_sequence
 
@@ -456,8 +474,6 @@ class CarController:
         
         plt.savefig('sim_history.png')
         return plt
-
-
 
 
     '''

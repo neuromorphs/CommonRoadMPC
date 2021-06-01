@@ -4,7 +4,7 @@ from CartPole.state_utilities import cartpole_state_varnames_to_indices, STATE_V
 
 from Predictores.predictor_ideal import predictor_ideal
 
-DEFAULT_SAMPLING_INTERVAL = 0.02  # s, Corresponds to our lab cartpole
+DEFAULT_SAMPLING_INTERVAL = 0.2  # s, Corresponds to our lab cartpole
 def get_prediction_from_euler_predictor(a, dataset, dt_sampling, dt_sampling_by_dt_fine=1):
 
     states_0 = dataset[STATE_VARIABLES].to_numpy()[:-a.test_max_horizon, :]

@@ -15,13 +15,12 @@ def run_simulation(number_of_steps):
     track = Track()
     car = Car(track)
     car_controller = CarController(car)
-    waypoint_index = 1
-    last_control_input = [0,0]
             
     for i in range(number_of_steps):
 
         next_control_sequence = car_controller.control_step()
         chosen_trajectory, cost = car_controller.simulate_trajectory(next_control_sequence)
+
 
         #Do the first step of the best control sequence
         car.step(next_control_sequence[0])
@@ -31,9 +30,9 @@ def run_simulation(number_of_steps):
 
         print(i)
         # Comment this out for speedup
-        # car_controller.draw_simulated_history(waypoint_index,chosen_trajectory)
+        # car_controller.draw_simulated_history(0,chosen_trajectory)
+        # car.draw_history("history.png")
         # car.save_history()
-        # car.draw_history()
 
     
 
@@ -83,7 +82,7 @@ def run_simulation(number_of_steps):
 
 
 if __name__ == '__main__':
-    run_simulation(10)
+    run_simulation(200)
 
  
 

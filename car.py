@@ -117,7 +117,7 @@ class Car:
     """
     draws the history (position and speed) of the car into a plot
     """    
-    def draw_history(self):
+    def draw_history(self, filename = None):
         plt.clf()
         plt.scatter(self.track.waypoints_x,self.track.waypoints_y)
 
@@ -144,5 +144,9 @@ class Car:
         now = datetime.now()
         now = now.strftime("%Y-%m-%d %H:%M:%S")
 
-        plt.savefig('ExperimentRecordings/history-{}.png'.format(now))
+        file = 'ExperimentRecordings/history-{}.png'.format(now)
+        if filename is not None:
+            file = filename
+
+        plt.savefig(file)
     
