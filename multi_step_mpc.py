@@ -6,7 +6,7 @@ from track import Track
 from constants import *
 import matplotlib.pyplot as plt
 
-
+from tqdm import trange
 
 
 def run_simulation(number_of_steps):
@@ -16,7 +16,7 @@ def run_simulation(number_of_steps):
     car = Car(track)
     car_controller = CarController(car)
             
-    for i in range(number_of_steps):
+    for i in trange(number_of_steps):
 
         next_control_sequence = car_controller.control_step()
         chosen_trajectory, cost = car_controller.simulate_trajectory(next_control_sequence)
@@ -28,7 +28,7 @@ def run_simulation(number_of_steps):
         car_controller.set_state(car.state)
 
 
-        print(i)
+        # print(i)
         # Comment this out for speedup
         # car_controller.draw_simulated_history(0,chosen_trajectory)
         # car.draw_history("history.png")
@@ -82,7 +82,7 @@ def run_simulation(number_of_steps):
 
 
 if __name__ == '__main__':
-    run_simulation(200)
+    run_simulation(50)
 
  
 
