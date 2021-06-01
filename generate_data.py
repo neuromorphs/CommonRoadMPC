@@ -12,6 +12,30 @@ track = Track()
 car = Car(track)
 
 
+def generate_random_walk(steps):
+
+    print("test")
+    track = Track()
+    car = Car(track)
+    car.state = [0,0,0,5,0,0,0]
+
+    mu, sigma = 0, 0.01 # mean and standard deviation
+    steering = np.random.normal(mu, sigma, steps)
+    mu, sigma = 0, 0.00 # mean and standard deviation
+    acceleration = np.random.normal(mu, sigma, steps)
+
+    control_input = [0,0]
+    for i in range(steps): 
+        control_input[0] = max(min(control_input[0] + steering[i], 1), -1)
+        control_input[1] = min(control_input[1] + acceleration[i], 0.4)
+
+        print(control_input)
+        car.step(control_input)
+        # car.step([0.1, 0.1])
+        print(i)
+
+    car.draw_history("test.png")
+    car.save_history()
 
 
 def generate_random():
@@ -80,7 +104,6 @@ def generate_random():
     df = pd.DataFrame(nn_results)
     df.to_csv('NeuralNetworkPredictor/data/train/random_results.csv', index=False, float_format='%.3f')
 
-generate_random()
 
 def generate_every_possibility():
     car.state = [0,0,0,0,0,0,0]
@@ -132,3 +155,7 @@ def generate_every_possibility():
     df = pd.DataFrame(nn_results)
     df.to_csv('NeuralNetworkPredictor/data/test/results.csv', index=False, float_format='%.3f')
 
+
+
+
+generate_random_walk(1000)
