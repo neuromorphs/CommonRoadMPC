@@ -52,8 +52,8 @@ RANDOM_WALK = 0.3
 NUMBER_OF_INITIAL_TRAJECTORIES = 100
 
 #Covariance for calculating simmilar controls to the last one
-STRATEGY_COVARIANCE=[[0.1, 0],[0, 0.1]]   
-NUMBER_OF_TRAJECTORIES = 20
+STRATEGY_COVARIANCE=[[0.02, 0],[0, 0.2]]   
+NUMBER_OF_TRAJECTORIES = 100
 
 NUMBER_OF_NEXT_WAYPOINTS = 20
 
@@ -266,6 +266,9 @@ class CarController:
             next_steerings = last_steerings + steering_noise
             next_accelerations = last_accelerations  + acceleration_noise
             next_control_inputs = np.vstack((next_steerings, next_accelerations)).T
+
+            next_control_inputs = signal.medfilt(next_control_inputs, [1, 3])
+
             control_input_sequences[i] = next_control_inputs
      
         # control_input_sequences = np.array(control_input_sequences)
@@ -343,7 +346,7 @@ class CarController:
         
         pursuit_cost = 1 / pursuit_cost
         # print("pursuit_cost",  pursuit_cost)
-        cost = distance_cost_weight * distance_cost + speed_cost_weight * speed_cost + progress_cost_weight * progress_cost + pursuit_cost_weight * pursuit_cost
+        cost = distance_cost_weight * distance_cost + speed_cost_weight * speed_cost + progress_cost_weight * progress_cost  #+ pursuit_cost_weight * pursuit_cost
         # print("Cost", cost)
 
     
@@ -439,8 +442,8 @@ class CarController:
         
 
 
-        # return next_control_sequence
-        return best_conrol_sequence
+        return next_control_sequence
+        # return best_conrol_sequence
 
     """
     draws the simulated history (position and speed) of the car into a plot for a trajectory distribution resp. the history of all trajectory distributions

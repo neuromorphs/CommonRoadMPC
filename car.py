@@ -20,10 +20,11 @@ import math
 import csv  
 from datetime import datetime
 from globals import *
+from pathlib import Path
 
 from scipy.integrate import odeint
 
-CONTINUE_FROM_LAST_STATE = True
+CONTINUE_FROM_LAST_STATE = False
 
 def solveEuler(func, x0, t, args):
     history = np.empty([len(t), len(x0)])
@@ -60,9 +61,14 @@ class Car:
 
 
         if CONTINUE_FROM_LAST_STATE:
-            initial_state = np.loadtxt(open("car_state.csv", "rb"), delimiter=",", skiprows=1)
-            print("Initial_state" , initial_state)
-            self.state = initial_state
+            my_file = Path("car_state.csv")
+            if my_file.is_file():
+                # file exists
+                initial_state = np.loadtxt(open("car_state.csv", "rb"), delimiter=",", skiprows=1)
+                print("Initial_state" , initial_state)
+                self.state = initial_state
+            else:
+                print("car_state.csv not found, chosing hardcoded initial value")
 
 
 

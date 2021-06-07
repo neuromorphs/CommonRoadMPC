@@ -36,7 +36,7 @@ def run_simulation(number_of_steps):
         # print(i)
         # Comment this out for speedup
         # car_controller.draw_simulated_history(0,chosen_trajectory)
-        # car.draw_history("history.png")
+        car.draw_history("history.png")
         # car.save_history()
 
     
@@ -87,7 +87,7 @@ def run_simulation(number_of_steps):
 
 
 if __name__ == '__main__':
-    run_simulation(500)
+    run_simulation(1000)
 
  
 
