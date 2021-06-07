@@ -19,8 +19,21 @@ import shapely.geometry as geom
 import math
 import csv  
 from datetime import datetime
+from globals import *
 
 from scipy.integrate import odeint
+
+CONTINUE_FROM_LAST_STATE = True
+
+def solveEuler(func, x0, t, args):
+    history = np.empty([len(t), len(x0)])
+    history[0] = x0
+    x = x0
+    #Calculate dt vector
+    for i in range(1, len(t)):
+        x = x + np.multiply(t[i] - t[i-1] ,func(x, t, args[0], args[1]))
+        history[i] = x
+    return history
 
 
 PATH_TO_EXPERIMENT_RECORDINGS = "./ExperimentRecordings"
@@ -35,15 +48,23 @@ class Car:
 
         self.parameters = parameters_vehicle2()
         # self.state = init_ks([0, 0, 0, 20, 0])
-        self.state = init_st([initial_position[0], initial_position[1], 0, 8, 0, 0,0])
-        # self.state = init_std([initial_position[0], initial_position[1], 0, 7, 0, 0,0], p= self.parameters)
+        self.state = init_st([initial_position[0], initial_position[1], 0, 7, 0, 0,0])
+        # self.state = init_std([initial_position[0], initial_position[1], 0, 8, 0, 0,0], p= self.parameters)
         # self.state = init_mb([419, 136, 0, 5, 0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0], self.parameters)
         self.time = 0 #TODO:
-        self.tControlSequence = 0.2  # [s] How long is a control input applied
+        self.tControlSequence = T_CONTROL  # [s] How long is a control input applied
         self.tEulerStep = 0.01
         self.state_history = [] #Hostory of real car states
         self.control_history = [] #History of controls applied every timestep
         self.track = track #Track waypoints for drawing
+
+
+        if CONTINUE_FROM_LAST_STATE:
+            initial_state = np.loadtxt(open("car_state.csv", "rb"), delimiter=",", skiprows=1)
+            print("Initial_state" , initial_state)
+            self.state = initial_state
+
+
 
 
 
@@ -65,6 +86,7 @@ class Car:
     def step(self, control_input):
         t = np.arange(0, self.tControlSequence, self.tEulerStep) 
         x_next = odeint(self.func_KS, self.state, t, args=(control_input, self.parameters))
+        # x_next = solveEuler(self.func_KS, self.state, t, args=(control_input, self.parameters))
 
         self.time += self.tControlSequence
         # print(self.time)
@@ -74,26 +96,31 @@ class Car:
 
 
 
-    def save_history(self):
+    def save_history(self, filename = None):
         print("Saving history...")
         
+        np.savetxt("car_state.csv", self.state, delimiter=",", header="x1,x2,x3,x4,x5,x6,x7")
+
         
         control_history = np.array(self.control_history)
-        np.savetxt("ExperimentRecordings/control_history.csv", control_history, delimiter=",", header="x1,x2,x3,x4,x5,x6,x7")
+        # np.savetxt("ExperimentRecordings/control_history.csv", control_history, delimiter=",", header="u1,u2")
 
-        header=["time", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "u1", "u2"]
+        header=["time", "dx","dy","x1", "x2", "x3", "x4", "x5", "x6", "x7", "u1", "u2"]
         state_history = np.array(self.state_history)
-        state_history = state_history.reshape(state_history.shape[0] * state_history.shape[1],7)
-        np.savetxt("ExperimentRecordings/car_state_history.csv", state_history, delimiter=",", header="x1,x2,x3,x4,x5,x6,x7")
+        state_history = state_history.reshape(state_history.shape[0] * state_history.shape[1],len(self.state))
+        # np.savetxt("ExperimentRecordings/car_state_history.csv", state_history, delimiter=",", header="x1,x2,x3,x4,x5,x6,x7")
 
 
         cut_state_history = state_history[0::20]
         now = datetime.now()
         now = now.strftime("%Y-%m-%d %H:%M:%S")
         print("Today's date:", now)
-        
+    
+        file = 'ExperimentRecordings/history-{}.csv'.format(now)
+        if filename is not None:
+            file = filename
 
-        with open('ExperimentRecordings/history-'+now+'.csv', 'w', encoding='UTF8') as f:
+        with open(file, 'w', encoding='UTF8') as f:
             writer = csv.writer(f)
 
 
@@ -105,8 +132,17 @@ class Car:
 
             writer.writerow(header)
             time = 0
+            dx = 0
+            dy = 0
             for i in range(len(cut_state_history)):
+                
+                if(i > 1):
+                    dx = cut_state_history[i][0] - cut_state_history[i-1][0]
+                    dy = cut_state_history[i][1] - cut_state_history[i-1][1]
+
                 state_and_control = np.append(cut_state_history[i],control_history[i])
+                state_and_control = np.append(dy, state_and_control)
+                state_and_control = np.append(dx, state_and_control)
                 time_state_and_control = np.append(time, state_and_control)
                 writer.writerow(time_state_and_control)
                 time = round(time+0.2, 2)

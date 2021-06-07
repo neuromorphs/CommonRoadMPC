@@ -27,11 +27,11 @@ def run_simulation(number_of_steps):
         #Update car state
         car_controller.set_state(car.state)
 
-        if car.state[0] > 100 or car.state[0] < 0 or car.state[1] > 80 or  car.state[0] < 0:
+        # if car.state[0] > 100 or car.state[0] < 0 or car.state[1] > 80 or  car.state[0] < 0:
 
-            car.draw_history()
-            car.save_history()
-            return
+        #     car.draw_history()
+        #     car.save_history()
+        #     return
 
         # print(i)
         # Comment this out for speedup
@@ -87,7 +87,7 @@ def run_simulation(number_of_steps):
 
 
 if __name__ == '__main__':
-    run_simulation(50)
+    run_simulation(500)
 
  
 

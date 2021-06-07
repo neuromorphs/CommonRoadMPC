@@ -1,3 +1,4 @@
+# from simple_mpc import cost_function
 import sys
 sys.path.insert(0, './commonroad-vehicle-models/PYTHON/')
 
@@ -13,6 +14,7 @@ from vehiclemodels.vehicle_dynamics_std import vehicle_dynamics_std
 from vehiclemodels.vehicle_dynamics_mb import vehicle_dynamics_mb
 
 from constants import *
+from globals import *
 
 from scipy import signal
 from multiprocessing import Pool
@@ -26,15 +28,19 @@ import numpy as np
 import shapely.geometry as geom
 import math
 
+def squared_distance(p1, p2):
+    squared_distance = abs(p1[0] - p2[0]) ** 2 + abs(p1[1] - p2[1]) ** 2
+    return squared_distance
+
 
 
 from scipy.integrate import odeint
 
 #Covariance Matrix for the input distribution
-INITIAL_COVARIANCE = [[0.0, 0], [0, 0.0]] 
+INITIAL_COVARIANCE = [[0.1, 0], [0, 0.0]] 
 
 #Covariance matrix for every next-step in the trajectory prediction
-STEP_COVARIANCE = [[0.2, 0],[0,0.1]]
+STEP_COVARIANCE = [[0.01, 0],[0,0.1]]
 NUMBER_OF_STEPS_PER_TRAJECTORY = 20
 
 # Must be between 0 and 1 and defines how close to a random walk the trajectories are
@@ -43,17 +49,17 @@ NUMBER_OF_STEPS_PER_TRAJECTORY = 20
 RANDOM_WALK = 0.3
 
 #Number of trajectories that are calculated for every step
-NUMBER_OF_INITIAL_TRAJECTORIES = 1000
+NUMBER_OF_INITIAL_TRAJECTORIES = 100
 
 #Covariance for calculating simmilar controls to the last one
-STRATEGY_COVARIANCE=[[0.01, 0],[0, 0.01]]   
-NUMBER_OF_TRAJECTORIES = 30
+STRATEGY_COVARIANCE=[[0.1, 0],[0, 0.1]]   
+NUMBER_OF_TRAJECTORIES = 20
 
-NUMBER_OF_NEXT_WAYPOINTS = 30
+NUMBER_OF_NEXT_WAYPOINTS = 20
 
 #With of the race track (ToDo) 
 DIST_TOLLERANCE = 4 
-INVERSE_TEMP = 10
+INVERSE_TEMP = 5
 DRAW_CHOSEN_SEQUENCE = True
 DRAW_TRAJECTORIES = True
 
@@ -83,8 +89,8 @@ class CarController:
     def __init__(self, car):
         self.parameters = parameters_vehicle2()
         self.time = 0 #TODO:
-        self.tControlSequence = 0.2  # [s] How long is a control input applied
-        self.tEulerStep = 0.01 # [s] One step of solving the ODEINT
+        self.tControlSequence = T_CONTROL  # [s] How long is a control input applied
+        self.tEulerStep = 0.005 # [s] One step of solving the ODEINT
         self.tHorizon = 4 # [s] TODO How long should routes be calculated
         self.history = [] #Hostory of real car states
         self.simulated_history = [] #Hostory of simulated car states
@@ -118,7 +124,7 @@ class CarController:
         waypoint_modulus.extend(waypoint_modulus[:NUMBER_OF_NEXT_WAYPOINTS])
 
         closest_to_car_position = self.track.get_closest_index(self.state[:2])
-        waypoint_modulus = waypoint_modulus[closest_to_car_position: closest_to_car_position+ NUMBER_OF_NEXT_WAYPOINTS]
+        waypoint_modulus = waypoint_modulus[closest_to_car_position + 5 : closest_to_car_position+ NUMBER_OF_NEXT_WAYPOINTS + 5]
 
         self.trackline = geom.LineString(waypoint_modulus)
 
@@ -165,20 +171,21 @@ class CarController:
             simulated_state = self.simulate_step(simulated_state, control_input)
             simulated_trajectory.append(simulated_state)
 
-            discount = (number_of_states - 0.5 * index) / number_of_states
-            cost +=  discount * self.cost_per_step(simulated_state)
+            # discount = (number_of_states - 0.5 * index) / number_of_states
+            # cost +=  discount * self.cost_per_step(simulated_state)
             
             index += 1
 
-        simulated_position = geom.Point(simulated_state[:2])
-        progress = original_car_position.distance(simulated_position)
-        # print("Progress", progress)
-        progress_cost = 200/progress
+        # simulated_position = geom.Point(simulated_state[:2])
+        # progress = original_car_position.distance(simulated_position)
+        # # print("Progress", progress)
+        # progress_cost = 1000/progress
 
         # print("progress_cost", progress_cost)
-        # print("Cost", cost)
 
-        cost = cost + progress_cost
+        # print("Cost", cost)
+        # cost = cost + progress_cost
+        cost = self.cost_function(simulated_trajectory)
         # print("Cost for whole trajectory", cost )
         return simulated_trajectory, cost 
 
@@ -261,7 +268,7 @@ class CarController:
             next_control_inputs = np.vstack((next_steerings, next_accelerations)).T
             control_input_sequences[i] = next_control_inputs
      
-        control_input_sequences = np.array(control_input_sequences)
+        # control_input_sequences = np.array(control_input_sequences)
 
         # end = time.time()
         # print("TIME FOR ROLLOUT")
@@ -275,35 +282,54 @@ class CarController:
     '''
     def cost_function(self, trajectory):
         max_distance = 5
+
+        closest_waypoint_index = self.track.get_closest_index(self.state[:2])
+        aim_for_waypoint_index = (closest_waypoint_index + 5) % len(self.track.waypoints)
+
+        # print("closest_waypoint_index",closest_waypoint_index) 
+        # print("aim_for_waypoint_index",aim_for_waypoint_index) 
+        # print("Current pos", self.state[:2]) 
+        # print("Current waypoint", self.track.waypoints[closest_waypoint_index]) 
+        # print("Aim for waypoint", self.track.waypoints[aim_for_waypoint_index]) 
+
         
-        track = self.trackline
+    
         distance_cost = 0
         speed_cost = 0
         progress_cost = 0
+        pursuit_cost = 0
 
         distance_cost_weight = 1
-        speed_cost_weight = 50
-        progress_cost_weight =100
+        speed_cost_weight = 0
+        progress_cost_weight =0
+        pursuit_cost_weight = 0
 
         number_of_critical_states = 10
 
         index = 0
         number_of_states = len(trajectory) 
 
+
+        closest_waypoint_index = 0
         for state in trajectory:
             discount = (number_of_states - 0.5 * index) / number_of_states
 
             simulated_position = geom.Point(state[0],state[1])
-            distance_to_track = simulated_position.distance(track)
+            distance_to_track = simulated_position.distance(self.trackline)
             speed = state[3]
             speed_cost += discount * speed
             distance_cost += discount * distance_to_track
+
+            closest_waypoint_index = self.track.get_closest_index(state[:2])
+            # print("closest_waypoint_index", closest_waypoint_index)
+            pursuit_cost += closest_waypoint_index
+           
             if(distance_to_track > max_distance):
                 if(index < number_of_critical_states):
-                    distance_cost += 100
+                    distance_cost += 0
                     # print("Potential crash during critical distance")
             index += 1
-
+            
         original_car_position = geom.Point(self.state[0],self.state[1])
         progress = original_car_position.distance(simulated_position)
 
@@ -314,12 +340,14 @@ class CarController:
         self.collect_distance_costs.append(distance_cost)
         self.collect_speed_costs.append(speed_cost)
         self.collect_progress_costs.append(progress_cost)
-
-        cost = distance_cost_weight * distance_cost + speed_cost_weight * speed_cost + progress_cost_weight * progress_cost
+        
+        pursuit_cost = 1 / pursuit_cost
+        # print("pursuit_cost",  pursuit_cost)
+        cost = distance_cost_weight * distance_cost + speed_cost_weight * speed_cost + progress_cost_weight * progress_cost + pursuit_cost_weight * pursuit_cost
         # print("Cost", cost)
 
     
-
+        # exit()
         return cost
 
     def cost_per_step(self, state):
@@ -374,10 +402,10 @@ class CarController:
 
         # control_sequences = self.sample_control_inputs(self.last_control_input)
         control_sequences = self.sample_control_inputs_similar_to_last(self.best_control_sequenct)
+        # control_sequences = u_dist #those are the handcrafted inputs
 
 
 
-        # input_samples = u_dist #those are the handcrafted inputs
         simulated_history, costs = self.simulate_trajectory_distribution( control_sequences )
 
         # print("Costs", costs)
@@ -403,7 +431,7 @@ class CarController:
 
         #Finding weighted avg input
         next_control_sequence = np.average(control_sequences,axis=0, weights=weights )
-        next_control_sequence = signal.medfilt(next_control_sequence, [1, 1])
+        # next_control_sequence = signal.medfilt(next_control_sequence, [3, 3])
 
         # print("next_control_sequence",next_control_sequence)
 
@@ -411,8 +439,8 @@ class CarController:
         
 
 
-        return next_control_sequence
-        # return best_conrol_sequence
+        # return next_control_sequence
+        return best_conrol_sequence
 
     """
     draws the simulated history (position and speed) of the car into a plot for a trajectory distribution resp. the history of all trajectory distributions
@@ -457,8 +485,8 @@ class CarController:
 
         #Draw waypoints
         waypoint_index = self.track.get_closest_index(self.state[:2])
-        w_x = self.track.waypoints_x[waypoint_index:waypoint_index+NUMBER_OF_NEXT_WAYPOINTS]
-        w_y = self.track.waypoints_y[waypoint_index:waypoint_index+NUMBER_OF_NEXT_WAYPOINTS]
+        w_x = self.track.waypoints_x[waypoint_index + 5 :waypoint_index+NUMBER_OF_NEXT_WAYPOINTS + 5]
+        w_y = self.track.waypoints_y[waypoint_index+ 5:waypoint_index+NUMBER_OF_NEXT_WAYPOINTS+ 5]
         position_ax.scatter(w_x,w_y, c ="#000000", label="Next waypoints")
 
         #Plot Chosen Trajectory
