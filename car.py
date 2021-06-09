@@ -109,12 +109,12 @@ class Car:
 
         
         control_history = np.array(self.control_history)
-        # np.savetxt("ExperimentRecordings/control_history.csv", control_history, delimiter=",", header="u1,u2")
+        np.savetxt("ExperimentRecordings/control_history.csv", control_history, delimiter=",", header="u1,u2")
 
-        header=["time", "dx","dy","x1", "x2", "x3", "x4", "x5", "x6", "x7", "u1", "u2"]
+        header=["time", "dx1","dx2","dx3","dx4","dx5","dx6","dx7","x1", "x2", "x3", "x4", "x5", "x6", "x7", "u1", "u2"]
         state_history = np.array(self.state_history)
         state_history = state_history.reshape(state_history.shape[0] * state_history.shape[1],len(self.state))
-        # np.savetxt("ExperimentRecordings/car_state_history.csv", state_history, delimiter=",", header="x1,x2,x3,x4,x5,x6,x7")
+        np.savetxt("ExperimentRecordings/car_state_history.csv", state_history, delimiter=",", header="x1,x2,x3,x4,x5,x6,x7")
 
 
         cut_state_history = state_history[0::20]
@@ -138,23 +138,23 @@ class Car:
 
             writer.writerow(header)
             time = 0
-            dx = 0
-            dy = 0
+            delta = np.zeros(len(self.state))
             for i in range(len(cut_state_history)):
                 
-                if(i > 1):
-                    dx = cut_state_history[i][0] - cut_state_history[i-1][0]
-                    dy = cut_state_history[i][1] - cut_state_history[i-1][1]
+                if(i >= 1):
+                    delta = cut_state_history[i-1] - cut_state_history[i]
 
                 state_and_control = np.append(cut_state_history[i],control_history[i])
-                state_and_control = np.append(dy, state_and_control)
-                state_and_control = np.append(dx, state_and_control)
+                state_and_control = np.append(delta, state_and_control)
+
+                print("state_and_control",state_and_control)
+               
                 time_state_and_control = np.append(time, state_and_control)
                 writer.writerow(time_state_and_control)
                 time = round(time+0.2, 2)
 
 
-
+    
 
     """
     draws the history (position and speed) of the car into a plot

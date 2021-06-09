@@ -92,7 +92,7 @@ def create_folders():
 
 if __name__ == '__main__':
     create_folders()
-    run_simulation(1000)
+    run_simulation(500)
 
  
 
