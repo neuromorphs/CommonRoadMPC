@@ -39,6 +39,10 @@ def predict_next_state(state, control_input):
 
     # Denormalize results
     prediction = scaler_y.inverse_transform(predictions_normalized)[0]
+    
+    if PREDICT_DELTA:
+        prediction = state + prediction
+
 
     return prediction
 

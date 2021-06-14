@@ -1,12 +1,12 @@
 from tqdm import trange
 
 import numpy as np
-from car import Car
-from car_controller import CarController
-from track import Track
+from racing.car import Car
+from racing.track import Track
+from mppi_mpc.car_controller import CarController
 from constants import *
 
-from car_controller import *
+from mppi_mpc.car_controller import *
 
 DEFAULT_SAMPLING_INTERVAL = 0.2  # s, Corresponds to our lab cartpole
 def get_prediction_for_testing_gui_from_euler(a, dataset, dt_sampling, dt_sampling_by_dt_fine=1):

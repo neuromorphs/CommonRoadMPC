@@ -101,7 +101,7 @@ class Car:
         control_history = np.array(self.control_history)
         np.savetxt("ExperimentRecordings/control_history.csv", control_history, delimiter=",", header="u1,u2")
 
-        header=["time", "dx1","dx2","dx3","dx4","dx5","dx6","dx7","x1", "x2", "x3", "x4", "x5", "x6", "x7", "u1", "u2"]
+        header=["time", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "u1", "u2"]
         state_history = np.array(self.state_history)
         state_history = state_history.reshape(state_history.shape[0] * state_history.shape[1],len(self.state))
         np.savetxt("ExperimentRecordings/car_state_history.csv", state_history, delimiter=",", header="x1,x2,x3,x4,x5,x6,x7")
@@ -135,8 +135,6 @@ class Car:
                     delta = cut_state_history[i-1] - cut_state_history[i]
 
                 state_and_control = np.append(cut_state_history[i],control_history[i])
-                state_and_control = np.append(delta, state_and_control)
-
                 print("state_and_control",state_and_control)
                
                 time_state_and_control = np.append(time, state_and_control)

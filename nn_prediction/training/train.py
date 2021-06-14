@@ -14,22 +14,33 @@ def train_network():
     # load the dataset
     #time, x1,x2,x3,x4,x5,x6,x7,u1,u2,x1n,x2n,x3n,x4n,x5n,x6n,x7n
     train_data = np.loadtxt('nn_prediction/training_data_large.csv', delimiter=',')
-    print(train_data.shape)
 
     # limit data for debugging
+    # train_data = np.loadtxt('nn_prediction/training_data.csv', delimiter=',')
     # train_data  = train_data[:10]
+
+    print("shape of trian data:", train_data.shape)
+
+
 
     # split into input (X) and output (y) variables
     x = train_data[:,1:10]
     y = train_data[:,10:]
 
-    print("x.shape", x.shape)
-    print("y.shape", y.shape)
+    #delta is the difference between state and next_state
+    delta =  y[:] - x[:,:7]
 
-    x, y = augument_data(x,y)
+    #if we want to train the network on the state changes instead of the state, use this
+    if PREDICT_DELTA:
+        y = delta
 
-    print("x.shape", x.shape)
-    print("y.shape", y.shape)
+    # print(y[0])
+    # exit()
+
+    # x, y = augument_data(x,y)
+
+    # print("x.shape", x.shape)
+    # print("y.shape", y.shape)
 
     # print("x_augumented",x[::10,0])
     # print("x_augumented",x[::10,1])
@@ -48,7 +59,7 @@ def train_network():
     model = Sequential()
     model.add(Dense(128, input_dim=9, activation='tanh'))
     model.add(Dense(256, activation='tanh'))
-    model.add(Dense(256, activation='tanh'))
+    model.add(Dense(128, activation='sigmoid'))
     model.add(Dense(128, activation='tanh'))
     model.add(Dense(7, activation='tanh'))
 
@@ -77,8 +88,8 @@ def train_network():
     # plt.show()
 
     #Evaluate
-    _, accuracy = model.evaluate(x, y)
-    print('Accuracy: %.2f' % (accuracy*100))
+    # _, accuracy = model.evaluate(x, y)
+    # print('Accuracy: %.2f' % (accuracy*100))
 
 
 

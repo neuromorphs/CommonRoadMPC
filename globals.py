@@ -9,7 +9,7 @@ PATH_TO_EXPERIMENT_RECORDINGS = "./ExperimentRecordings"
 ################### Car ##################
 ##########################################
 
-CONTINUE_FROM_LAST_STATE = True
+CONTINUE_FROM_LAST_STATE = False
 
 
 ##########################################
@@ -29,11 +29,11 @@ NUMBER_OF_STEPS_PER_TRAJECTORY = 20
 RANDOM_WALK = 0.3
 
 #Number of trajectories that are calculated for every step
-NUMBER_OF_INITIAL_TRAJECTORIES = 50
+NUMBER_OF_INITIAL_TRAJECTORIES = 10
 
 #Covariance for calculating simmilar controls to the last one
 STRATEGY_COVARIANCE=[[0.02, 0],[0, 0.2]]   
-NUMBER_OF_TRAJECTORIES = 50
+NUMBER_OF_TRAJECTORIES = 10
 
 NUMBER_OF_NEXT_WAYPOINTS = 20
 
@@ -50,8 +50,9 @@ MAX_COST = 1000
 ############## NN Predictor ##############
 ##########################################
 
-TRAIN_NEW_MODEL = False
-MODEL_NAME = "Dense-128-256-256-128_augumented"
+MODEL_NAME = "Dense-128-256-128-128_delta"
+# MODEL_NAME = "Dense-128-256-256-128_augumented"
 
-NUMBER_OF_EPOCHS = 3
-BATCH_SIZE = 64
+NUMBER_OF_EPOCHS = 5
+BATCH_SIZE = 16
+PREDICT_DELTA = True
