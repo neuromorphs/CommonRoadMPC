@@ -19,25 +19,15 @@ import shapely.geometry as geom
 import math
 import csv  
 from datetime import datetime
+
 from globals import *
+from util import *
+
 from pathlib import Path
 
 from scipy.integrate import odeint
 
-CONTINUE_FROM_LAST_STATE = False
 
-def solveEuler(func, x0, t, args):
-    history = np.empty([len(t), len(x0)])
-    history[0] = x0
-    x = x0
-    #Calculate dt vector
-    for i in range(1, len(t)):
-        x = x + np.multiply(t[i] - t[i-1] ,func(x, t, args[0], args[1]))
-        history[i] = x
-    return history
-
-
-PATH_TO_EXPERIMENT_RECORDINGS = "./ExperimentRecordings"
 
 '''
 Represents the "real car", calculated by the l2race server
@@ -61,14 +51,14 @@ class Car:
 
 
         if CONTINUE_FROM_LAST_STATE:
-            my_file = Path("car_state.csv")
+            my_file = Path("racing/last_car_state.csv")
             if my_file.is_file():
                 # file exists
-                initial_state = np.loadtxt(open("car_state.csv", "rb"), delimiter=",", skiprows=1)
+                initial_state = np.loadtxt(open("racing/last_car_state.csv", "rb"), delimiter=",", skiprows=1)
                 print("Initial_state" , initial_state)
                 self.state = initial_state
             else:
-                print("car_state.csv not found, chosing hardcoded initial value")
+                print("racing/last_car_state.csv not found, chosing hardcoded initial value")
 
 
 
@@ -105,7 +95,7 @@ class Car:
     def save_history(self, filename = None):
         print("Saving history...")
         
-        np.savetxt("car_state.csv", self.state, delimiter=",", header="x1,x2,x3,x4,x5,x6,x7")
+        np.savetxt("racing/last_car_state.csv", self.state, delimiter=",", header="x1,x2,x3,x4,x5,x6,x7")
 
         
         control_history = np.array(self.control_history)

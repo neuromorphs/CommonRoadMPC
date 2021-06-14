@@ -1,13 +1,12 @@
 import numpy as np
 import math
-from car import Car
-from car_controller import CarController
-from track import Track
+from racing.car import Car
+from racing.track import Track
+from mppi_mpc.car_controller import CarController
 from constants import *
 import matplotlib.pyplot as plt
 import os
 from tqdm import trange
-
 
 def run_simulation(number_of_steps):
 
@@ -85,14 +84,9 @@ def run_simulation(number_of_steps):
 
 
 
-def create_folders():
-    
-    if not os.path.exists("ExperimentRecordings"):
-        os.makedirs("ExperimentRecordings")
-
 if __name__ == '__main__':
-    create_folders()
-    run_simulation(500)
+
+    run_simulation(10)
 
  
 

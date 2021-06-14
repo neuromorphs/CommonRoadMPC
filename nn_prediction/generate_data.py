@@ -1,9 +1,9 @@
 import numpy as np
 import math
 import pandas as pd
-from car import Car
-from car_controller import CarController
-from track import Track
+from racing.car import Car
+from racing.track import Track
+from mppi_mpc.car_controller import CarController
 from constants import *
 import matplotlib.pyplot as plt
 
