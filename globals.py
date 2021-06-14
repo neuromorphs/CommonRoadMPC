@@ -51,3 +51,7 @@ MAX_COST = 1000
 ##########################################
 
 TRAIN_NEW_MODEL = False
+MODEL_NAME = "Dense-128-256-256-128_augumented"
+
+NUMBER_OF_EPOCHS = 3
+BATCH_SIZE = 64

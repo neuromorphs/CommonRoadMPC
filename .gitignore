@@ -6,3 +6,6 @@ __pycache__
 test.py
 *.png
 .env
+
+#Neural Network Prediction
+nn_prediction/models/*
