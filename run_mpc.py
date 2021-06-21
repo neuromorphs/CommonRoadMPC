@@ -14,6 +14,7 @@ def run_simulation(number_of_steps):
     track = Track()
     car = Car(track)
     car_controller = CarController(car, predictor="nn", model_name="Dense-128-128-128-128-uniform-20")
+    # car_controller = CarController(car, predictor="euler")
 
     for i in trange(number_of_steps):
 
@@ -35,7 +36,7 @@ def run_simulation(number_of_steps):
 
         # print(i)
         # Comment this out for speedup
-        car_controller.draw_simulated_history(0, chosen_trajectory)
+        # car_controller.draw_simulated_history(0, chosen_trajectory)
         car.draw_history("history.png")
         # car.save_history()
 
@@ -80,5 +81,5 @@ def run_simulation(number_of_steps):
 
 if __name__ == "__main__":
 
-    run_simulation(100)
+    run_simulation(200)
 

@@ -21,7 +21,7 @@ INITIAL_COVARIANCE = [[0.2, 0], [0, 0.2]]
 
 # Covariance matrix for every next-step in the trajectory prediction
 STEP_COVARIANCE = [[0.0, 0], [0, 0.0]]
-NUMBER_OF_STEPS_PER_TRAJECTORY = 20
+NUMBER_OF_STEPS_PER_TRAJECTORY = 15
 
 # Must be between 0 and 1 and defines how close to a random walk the trajectories are
 # 0: The trajectories are calculated by a completely random control with mean = 0 and variance = step_covariance0
@@ -29,11 +29,11 @@ NUMBER_OF_STEPS_PER_TRAJECTORY = 20
 RANDOM_WALK = 0.0
 
 # Number of trajectories that are calculated for every step
-NUMBER_OF_INITIAL_TRAJECTORIES = 20
+NUMBER_OF_INITIAL_TRAJECTORIES = 1000
 
 # Covariance for calculating simmilar controls to the last one
-STRATEGY_COVARIANCE = [[0.02, 0], [0, 0.0]]
-NUMBER_OF_TRAJECTORIES = 20
+STRATEGY_COVARIANCE = [[0.02, 0], [0, 0.1]]
+NUMBER_OF_TRAJECTORIES = 500
 
 NUMBER_OF_NEXT_WAYPOINTS = 20
 
@@ -51,13 +51,13 @@ MAX_COST = 1000
 ##########################################
 
 
-MODEL_NAME = "Dense-128-128-128-128-uniform-20"
+MODEL_NAME = "Dense-128-128-128-128-uniform-40"
 # MODEL_NAME = "Dense-128-256-256-128_0.1s_delta"
 # MODEL_NAME = "Dense-128-256-256-128_0.1s"
 
 # Training parameters
-TRAINING_DATA_FILE = "training_data_uniform_500x500x10.csv"
-NUMBER_OF_EPOCHS = 20
-BATCH_SIZE = 64
+TRAINING_DATA_FILE = "training_data_1000x1000x10.csv"
+NUMBER_OF_EPOCHS = 40
+BATCH_SIZE = 128
 PREDICT_DELTA = True
 NORMALITE_DATA = True

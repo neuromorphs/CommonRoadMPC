@@ -17,7 +17,6 @@ from vehiclemodels.vehicle_dynamics_mb import vehicle_dynamics_mb
 from constants import *
 from globals import *
 from util import *
-from nn_prediction.prediction import NeuralNetworkPredictor
 
 
 from scipy import signal
@@ -65,6 +64,7 @@ class CarController:
         self.predictior = predictor
 
         if( model_name is not None):
+            from nn_prediction.prediction import NeuralNetworkPredictor
             self.nn_predictor = NeuralNetworkPredictor(model_name = model_name)
         
         self.update_trackline()
@@ -185,6 +185,45 @@ class CarController:
 
         return results, costs
 
+
+    '''
+    Returns a trajectory for every control input in control_inputs_distribution
+    '''
+    def simulate_trajectory_distribution_nn(self, control_inputs_distrubution):
+
+        # start = time.time()
+        control_inputs_distrubution = np.swapaxes(control_inputs_distrubution, 0,1)
+        # print(control_inputs_distrubution.shape)
+
+        results = []
+
+        states = np.array(len(control_inputs_distrubution[0]) * [self.car.state])
+        # print(states.shape)
+        for control_inputs in control_inputs_distrubution:
+
+            # print(control_inputs.shape)
+            states = self.nn_predictor.predict_multiple_states(states, control_inputs)
+            results.append(states)
+
+
+        results = np.array(results)
+        results = np.swapaxes(results,0,1)
+
+
+        costs =[]
+        for result in results:
+            cost = self.cost_function(result)
+            costs.append(cost)
+     
+
+        self.simulated_history = results
+        self.simulated_costs = costs
+        # end = time.time()
+        # print("TIME FOR all Trajectories")
+        # print(end - start)
+
+        return results, costs
+
     '''
     Returns a gaussian distribution around the last control input
     '''
@@ -216,7 +255,7 @@ class CarController:
     def sample_control_inputs_similar_to_last(self, last_control_sequence):
 
         # start = time.time()
-        return self.sample_control_inputs([0,0])
+        # return self.sample_control_inputs([0,0])
        
         #Not initialized
         if(len(last_control_sequence) == 0):
@@ -398,7 +437,7 @@ class CarController:
 
 
 
-        simulated_history, costs = self.simulate_trajectory_distribution( control_sequences )
+        simulated_history, costs = self.simulate_trajectory_distribution_nn( control_sequences )
 
         # print("Costs", costs)
         trajectory_index = 0    
