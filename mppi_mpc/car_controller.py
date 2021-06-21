@@ -17,6 +17,8 @@ from vehiclemodels.vehicle_dynamics_mb import vehicle_dynamics_mb
 from constants import *
 from globals import *
 from util import *
+from nn_prediction.prediction import NeuralNetworkPredictor
+
 
 from scipy import signal
 from multiprocessing import Pool
@@ -42,7 +44,7 @@ Can calculate the next control step due to the cost function
 '''
 
 class CarController:
-    def __init__(self, car):
+    def __init__(self, car, predictor="euler", model_name = None):
         self.parameters = parameters_vehicle2()
         self.time = 0 #TODO:
         self.tControlSequence = T_CONTROL  # [s] How long is a control input applied
@@ -60,6 +62,10 @@ class CarController:
         self.collect_progress_costs = []
         self.best_control_sequenct = initial_sequence
         self.best_control_sequenct = [] #initial_sequence
+        self.predictior = predictor
+
+        if( model_name is not None):
+            self.nn_predictor = NeuralNetworkPredictor(model_name = model_name)
         
         self.update_trackline()
        
@@ -101,9 +107,19 @@ class CarController:
     '''
     def simulate_step(self, state, control_input):
         t = np.arange(0, self.tControlSequence, self.tEulerStep) 
-        x_next = solveEuler(self.func_KS, state, t, args=(control_input, self.parameters))
-        # x_next = odeint(self.func_KS, state, t, args=(control_input, self.parameters))
-        return x_next[-1]
+        # print("state", state)
+        # exit()
+
+        if(self.predictior  == "euler"):
+            x_next = solveEuler(self.func_KS, state, t, args=(control_input, self.parameters))[-1]
+        elif (self.predictior=="odeint"):
+            x_next = odeint(self.func_KS, state, t, args=(control_input, self.parameters))[-1]
+        else:
+            x_next = self.nn_predictor.predict_next_state(state, control_input)[:,]
+
+    
+
+        return x_next
 
     '''
     Simulates a hypothetical trajectory of the car due to a list of control inputs
@@ -302,7 +318,7 @@ class CarController:
 
 
         speed_cost = 1 /speed_cost
-        progress_cost = 1/progress
+        # progress_cost = 1/progress
 
         self.collect_distance_costs.append(distance_cost)
         self.collect_speed_costs.append(speed_cost)
@@ -476,7 +492,7 @@ class CarController:
             plt.legend(  fancybox=True, shadow=True, loc="best")
 
         
-        plt.savefig('mppi_mpc/sim_history.png')
+        plt.savefig('sim_history.png')
         return plt
 
     def save_history_sequence(self,control_inputs, state_historoy):
@@ -496,7 +512,7 @@ class CarController:
 
                 #time, x1,x2,x3,x4,x5,x6,x7,u1,u2,x1n,x2n,x3n,x4n,x5n,x6n,x7n
                 writer.writerow(time_state_and_control)
-                time = round(time+0.2, 2)
+                time = round(time+self.tControlSequence, 2)
     '''
     This is only needed to deploy on l2race...
     '''

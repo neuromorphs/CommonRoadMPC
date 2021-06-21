@@ -7,23 +7,32 @@ import joblib
 import matplotlib.pyplot as plt
 from globals import *
 from nn_prediction.training.util import *
+import json
 
 
 def train_network():
 
+
+    nn_settings ={
+        "predict_delta" : PREDICT_DELTA,
+        "normalize_data": NORMALITE_DATA,
+        "model_name": MODEL_NAME
+    }
+ 
+
     # load the dataset
     #time, x1,x2,x3,x4,x5,x6,x7,u1,u2,x1n,x2n,x3n,x4n,x5n,x6n,x7n
-    train_data = np.loadtxt('nn_prediction/training_data_large.csv', delimiter=',')
+    train_data = np.loadtxt('nn_prediction/training_data/{}'.format(TRAINING_DATA_FILE), delimiter=',')
 
     # limit data for debugging
-    # train_data = np.loadtxt('nn_prediction/training_data.csv', delimiter=',')
-    # train_data  = train_data[:10]
+    # train_data = np.loadtxt('nn_prediction/training_data_small.csv', delimiter=',')
 
-    print("shape of trian data:", train_data.shape)
+    print("train_data.shape", train_data.shape)
 
 
 
     # split into input (X) and output (y) variables
+    #time, x1,x2,x3,x4,x5,x6,x7,u1,u2,x1n,x2n,x3n,x4n,x5n,x6n,x7n
     x = train_data[:,1:10]
     y = train_data[:,10:]
 
@@ -34,34 +43,26 @@ def train_network():
     if PREDICT_DELTA:
         y = delta
 
-    # print(y[0])
-    # exit()
 
-    # x, y = augument_data(x,y)
-
-    # print("x.shape", x.shape)
-    # print("y.shape", y.shape)
-
-    # print("x_augumented",x[::10,0])
-    # print("x_augumented",x[::10,1])
-    # print("y_augumented",y.shape)
-    # exit()
-
+    # Augmentation for lots of lots of data
+    # x, y = augment_data(x,y)
 
     # Normalize data
     scaler_x = preprocessing.MinMaxScaler().fit(x)
     scaler_y = preprocessing.MinMaxScaler().fit(y)
-    x = scaler_x.transform(x)
-    y = scaler_y.transform(y)
+
+    if(NORMALITE_DATA):
+        x = scaler_x.transform(x)
+        y = scaler_y.transform(y)
 
 
     # keras model
     model = Sequential()
     model.add(Dense(128, input_dim=9, activation='tanh'))
-    model.add(Dense(256, activation='tanh'))
-    model.add(Dense(128, activation='sigmoid'))
     model.add(Dense(128, activation='tanh'))
-    model.add(Dense(7, activation='tanh'))
+    model.add(Dense(128, activation='tanh'))
+    model.add(Dense(128, activation='tanh'))
+    model.add(Dense(7))
 
 
     # compile
@@ -74,22 +75,37 @@ def train_network():
     model_path = 'nn_prediction/models/{}'.format(MODEL_NAME)
     scaler_x_path = 'nn_prediction/models/{}/scaler_x.pkl'.format(MODEL_NAME)
     scaler_y_path = 'nn_prediction/models/{}/scaler_y.pkl'.format(MODEL_NAME)
+    nn_settings_path = 'nn_prediction/models/{}/nn_settings.json'.format(MODEL_NAME)
+
     model.save(model_path)
     joblib.dump(scaler_x, scaler_x_path) 
     joblib.dump(scaler_y, scaler_y_path) 
+    with open(nn_settings_path, "w") as outfile:
+        outfile.write(json.dumps(nn_settings))
 
-    # Plot results
+
     plt.plot(history.history['accuracy'])
     plt.plot(history.history['val_accuracy'])
     plt.title('model accuracy')
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
-    # plt.show()
+    plt.legend(['train', 'val'], loc='upper left')
+    plt.savefig('nn_prediction/models/{}/accuracy_curve'.format(MODEL_NAME))
+
+    plt.clf()
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.yscale('log')
+    plt.title('model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'val'], loc='upper left')
+    plt.savefig('nn_prediction/models/{}/loss_curve'.format(MODEL_NAME))
+
 
     #Evaluate
-    # _, accuracy = model.evaluate(x, y)
-    # print('Accuracy: %.2f' % (accuracy*100))
+    _, accuracy = model.evaluate(x, y)
+    print('Accuracy: %.2f' % (accuracy*100))
 
 
 

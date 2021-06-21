@@ -8,22 +8,23 @@ import matplotlib.pyplot as plt
 import os
 from tqdm import trange
 
-def run_simulation(number_of_steps):
 
+def run_simulation(number_of_steps):
 
     track = Track()
     car = Car(track)
-    car_controller = CarController(car)
-            
+    car_controller = CarController(car, predictor="nn", model_name="Dense-128-128-128-128-uniform-20")
+
     for i in trange(number_of_steps):
 
         next_control_sequence = car_controller.control_step()
-        chosen_trajectory, cost = car_controller.simulate_trajectory(next_control_sequence)
+        chosen_trajectory, cost = car_controller.simulate_trajectory(
+            next_control_sequence
+        )
 
-
-        #Do the first step of the best control sequence
+        # Do the first step of the best control sequence
         car.step(next_control_sequence[0])
-        #Update car state
+        # Update car state
         car_controller.set_state(car.state)
 
         # if car.state[0] > 100 or car.state[0] < 0 or car.state[1] > 80 or  car.state[0] < 0:
@@ -34,11 +35,9 @@ def run_simulation(number_of_steps):
 
         # print(i)
         # Comment this out for speedup
-        # car_controller.draw_simulated_history(0,chosen_trajectory)
+        car_controller.draw_simulated_history(0, chosen_trajectory)
         car.draw_history("history.png")
         # car.save_history()
-
-    
 
     car.draw_history()
     car.save_history()
@@ -46,13 +45,11 @@ def run_simulation(number_of_steps):
     # print(history)
     # exit()
 
-
-
-    '''
+    """
     This is only for getting a feeling of how hight the different costs are... can be ignored
-    '''
+    """
 
-    #Show cost distributions
+    # Show cost distributions
     # collect_distance_costs = car_controller.collect_distance_costs
     # collect_speed_costs = car_controller.collect_speed_costs
     # collect_progress_costs = car_controller.collect_progress_costs
@@ -78,18 +75,10 @@ def run_simulation(number_of_steps):
     # axs[2].set_title('Progress Cost Distribution')
     # axs[2].hist(collect_progress_costs, bins=20)
 
-
     # plt.savefig("cost_distributiuon.png")
 
 
+if __name__ == "__main__":
 
-
-if __name__ == '__main__':
-
-    run_simulation(10)
-
- 
-
-
-
+    run_simulation(100)
 

@@ -9,9 +9,14 @@ from constants import *
 from mppi_mpc.car_controller import *
 
 DEFAULT_SAMPLING_INTERVAL = 0.2  # s, Corresponds to our lab cartpole
-def get_prediction_for_testing_gui_from_euler(a, dataset, dt_sampling, dt_sampling_by_dt_fine=1):
+def get_prediction_for_testing_gui_from_euler(a, dataset, dt_sampling, predictor, dt_sampling_by_dt_fine=1):
 
-    print("a", a)
+    # predictor => "euler", "odeint", "Dense-128-256-128_delta" or any other Neural network name
+
+    model_name = None
+    if(predictor != "euler" and predictor != "odeint"):
+        model_name = predictor
+
     # region In either case testing is done on a data collected offline
     output_array = np.zeros(shape=(a.test_max_horizon+1, a.test_len, len(a.features)+1))
 
@@ -19,15 +24,14 @@ def get_prediction_for_testing_gui_from_euler(a, dataset, dt_sampling, dt_sampli
     # Q_array = [Q[i:-a.test_max_horizon + i] for i in range(a.test_max_horizon)]
     # Q_array = np.vstack(Q_array)
     # output_array[:-1, :, -1] = Q_array
-    print('Calculating predictions...')
+    print('Calculating predictions with {}'.format(predictor))
 
     track = Track()
     car = Car(track)
-    car_controller = CarController(car)
+    car_controller = CarController(car, predictor=predictor, model_name = model_name)
     initial_state = dataset.loc[dataset.index[[0]], :].values[0][1:-2]
     car.state = initial_state
     car_controller.set_state(initial_state)
-
 
     for timestep in trange(a.test_len):
     

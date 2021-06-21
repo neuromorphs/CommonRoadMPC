@@ -81,8 +81,8 @@ class Car:
     '''
     def step(self, control_input):
         t = np.arange(0, self.tControlSequence, self.tEulerStep) 
-        x_next = odeint(self.func_KS, self.state, t, args=(control_input, self.parameters))
-        # x_next = solveEuler(self.func_KS, self.state, t, args=(control_input, self.parameters))
+        # x_next = odeint(self.func_KS, self.state, t, args=(control_input, self.parameters))
+        x_next = solveEuler(self.func_KS, self.state, t, args=(control_input, self.parameters))
 
         self.time += self.tControlSequence
         # print(self.time)
@@ -123,23 +123,19 @@ class Car:
             #Meta data
             f.write("# Datetime: {} \n".format(now))
             f.write("# Track: {} \n".format( self.track.track_name))
-            f.write("# Saving: {}\n".format("0.2s"))
+            f.write("# Saving: {}\n".format("{}s".format(self.tControlSequence)))
             f.write("# Model: {}\n".format("MPPI, Ground truth model"))
 
             writer.writerow(header)
             time = 0
-            delta = np.zeros(len(self.state))
             for i in range(len(cut_state_history)):
-                
-                if(i >= 1):
-                    delta = cut_state_history[i-1] - cut_state_history[i]
 
                 state_and_control = np.append(cut_state_history[i],control_history[i])
                 print("state_and_control",state_and_control)
                
                 time_state_and_control = np.append(time, state_and_control)
                 writer.writerow(time_state_and_control)
-                time = round(time+0.2, 2)
+                time = round(time+self.tControlSequence, 2)
 
 
     

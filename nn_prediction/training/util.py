@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def augument_data(x,y):
+def augment_data(x,y):
 
     x,y = shift_x0_invariant(x,y)
     x,y = shift_x1_invariant(x,y)
