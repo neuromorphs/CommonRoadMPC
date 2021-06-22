@@ -1,3 +1,4 @@
 {
     "python.pythonPath": "/Users/florian/miniconda3/envs/cr-mpc/bin/python",
+    "python.formatting.provider": "black",
 }

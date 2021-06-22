@@ -12,20 +12,20 @@ from vehiclemodels.vehicle_dynamics_ks import vehicle_dynamics_ks
 from vehiclemodels.vehicle_dynamics_st import vehicle_dynamics_st
 from vehiclemodels.vehicle_dynamics_std import vehicle_dynamics_std
 from vehiclemodels.vehicle_dynamics_mb import vehicle_dynamics_mb
-from matplotlib import cm
-import matplotlib.pyplot as plt
-import numpy as np
-import shapely.geometry as geom
-import math
-import csv  
-from datetime import datetime
 
 from globals import *
 from util import *
 
+import numpy as np
+from scipy.integrate import odeint
+import matplotlib.pyplot as plt
+from matplotlib import cm
+
+from datetime import datetime
 from pathlib import Path
 
-from scipy.integrate import odeint
+import csv  
+
 
 
 
@@ -38,18 +38,18 @@ class Car:
         initial_position = track.initial_position
 
         self.parameters = parameters_vehicle2()
-        # self.state = init_ks([0, 0, 0, 20, 0])
-        self.state = init_st([initial_position[0], initial_position[1], 0, 8, 0, 0,0])
-        # self.state = init_std([initial_position[0], initial_position[1], 0, 8, 0, 0,0], p= self.parameters)
-        # self.state = init_mb([419, 136, 0, 5, 0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0], self.parameters)
-        self.time = 0 #TODO:
+        self.state = init_st([initial_position[0], initial_position[1], 0, INITIAL_SPEED, 0, 0,0])
+        # self.state = init_std([initial_position[0], initial_position[1], 0, INITIAL_SPEED, 0, 0,0], p= self.parameters)
+        # self.state = init_mb([419, 136, 0, INITIAL_SPEED, 0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0], self.parameters)
+        
+        self.time = 0 # The car's clock
         self.tControlSequence = T_CONTROL  # [s] How long is a control input applied
         self.tEulerStep = 0.01
         self.state_history = [] #Hostory of real car states
         self.control_history = [] #History of controls applied every timestep
         self.track = track #Track waypoints for drawing
 
-
+        # For continuous experiment, we can start, where we last ended
         if CONTINUE_FROM_LAST_STATE:
             my_file = Path("racing/last_car_state.csv")
             if my_file.is_file():
@@ -67,7 +67,7 @@ class Car:
     '''
     Dynamics of the real car
     '''
-    def func_KS(self,x, t, u, p):
+    def car_dynamics(self,x, t, u, p):
         # f = vehicle_dynamics_ks(x, u, p)
         f = vehicle_dynamics_st(x, u, p)
         # f = vehicle_dynamics_std(x, u, p)
@@ -81,11 +81,12 @@ class Car:
     '''
     def step(self, control_input):
         t = np.arange(0, self.tControlSequence, self.tEulerStep) 
-        # x_next = odeint(self.func_KS, self.state, t, args=(control_input, self.parameters))
-        x_next = solveEuler(self.func_KS, self.state, t, args=(control_input, self.parameters))
+
+        # Next car position can be solved with euler or odeint
+        x_next = odeint(self.car_dynamics, self.state, t, args=(control_input, self.parameters))
+        # x_next = solveEuler(self.car_dynamics, self.state, t, args=(control_input, self.parameters))
 
         self.time += self.tControlSequence
-        # print(self.time)
         self.state = x_next[-1]
         self.state_history.append(x_next)
         self.control_history.append(control_input)
@@ -96,7 +97,6 @@ class Car:
         print("Saving history...")
         
         np.savetxt("racing/last_car_state.csv", self.state, delimiter=",", header="x1,x2,x3,x4,x5,x6,x7")
-
         
         control_history = np.array(self.control_history)
         np.savetxt("ExperimentRecordings/control_history.csv", control_history, delimiter=",", header="u1,u2")

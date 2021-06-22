@@ -1,12 +1,13 @@
-import numpy as np
-import math
 from racing.car import Car
 from racing.track import Track
 from mppi_mpc.car_controller import CarController
+
 from constants import *
 from globals import *
+
 import matplotlib.pyplot as plt
-import os
+import numpy as np
+
 from tqdm import trange
 
 
@@ -18,9 +19,7 @@ def run_simulation(number_of_steps):
     # car_controller = CarController(car, predictor="euler")
 
     for i in trange(number_of_steps):
-
-        # print(i)
-
+        
         next_control_sequence = car_controller.control_step()
       
         # Do the first step of the best control sequence
