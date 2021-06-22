@@ -16,31 +16,6 @@ car = Car(track)
 
 pi = math.pi
 
-def generate_random_walk(steps):
-
-    print("test")
-    track = Track()
-    car = Car(track)
-    car.state = [0,0,0,5,0,0,0]
-
-    mu, sigma = 0, 0.01 # mean and standard deviation
-    steering = np.random.normal(mu, sigma, steps)
-    mu, sigma = 0, 0.00 # mean and standard deviation
-    acceleration = np.random.normal(mu, sigma, steps)
-
-    control_input = [0,0]
-    for i in range(steps): 
-        control_input[0] = max(min(control_input[0] + steering[i], 1), -1)
-        control_input[1] = min(control_input[1] + acceleration[i], 0.4)
-
-        print(control_input)
-        car.step(control_input)
-        # car.step([0.1, 0.1])
-        print(i)
-
-    car.draw_history("test.png")
-    car.save_history()
-
 
 def generate_distribution():
 
@@ -49,13 +24,13 @@ def generate_distribution():
 
     track = Track()
     car = Car(track)
-    number_of_initial_states = 500
+    number_of_initial_states = 1
     number_of_trajectories = 500
     number_of_steps_per_trajectory = 10
 
     car.state = [0,0,0,0,0,0,0]
 
-    #Position
+    #Position => invariant since we are only interrested in delta
     x_dist = np.zeros(number_of_initial_states)
     y_dist = np.zeros(number_of_initial_states)
 
@@ -103,12 +78,9 @@ def generate_distribution():
                 results.append(state_and_control_and_future_state)
 
 
-        # car.draw_history("test.png")
+        car.draw_history("test.png")
 
         with open("nn_prediction/training_data.csv", 'a', encoding='UTF8') as f:
-
-  
-
             writer = csv.writer(f)
             time = 0
             for result in results:
@@ -118,80 +90,6 @@ def generate_distribution():
                 #time, x1,x2,x3,x4,x5,x6,x7,u1,u2,x1n,x2n,x3n,x4n,x5n,x6n,x7n
                 writer.writerow(time_state_and_control)
                 time = round(time+0.2, 2)
-
-
-    exit()
-    for i in range(number_of_initial_states): 
-        #Set random initial state
-        car.state = [
-            s_x_dist[i],
-            s_y_dist[i],
-            delta_dist[i],
-            v_dist[i],
-            epsylon_dist[i],
-            epsylon_dot_dist[i],
-            beta_dist[i],
-        ]
-
-      
-
-    df = pd.DataFrame(nn_inputs)
-    df.to_csv('NeuralNetworkPredictor/data/train/random_inputs.csv', index=False, float_format='%.3f')
-    df = pd.DataFrame(nn_results)
-    df.to_csv('NeuralNetworkPredictor/data/train/random_results.csv', index=False, float_format='%.3f')
-
-
-def generate_every_possibility():
-    car.state = [0,0,0,0,0,0,0]
-
-    nn_inputs = []
-    nn_results = []
-
-    for i in range(0, 10):
-        car.state = [i,0,0,0,0,0,0]
-        for j in range(100):
-            for k in range(100):
-                control = [0.01 * j, 0.01 * k]
-                #The NN input is an array containing the current state and the control
-                nn_input = np.append(car.state.copy(), control)
-                nn_inputs.append(nn_input)
-
-                car.step(control)
-
-                #The nn output is the next state
-                nn_result = car.state
-                nn_results.append(car.state)
-
-
-    df = pd.DataFrame(nn_inputs)
-    df.to_csv('NeuralNetworkPredictor/data/train/inputs.csv', index=False, float_format='%.3f')
-    df = pd.DataFrame(nn_results)
-    df.to_csv('NeuralNetworkPredictor/data/train/results.csv', index=False, float_format='%.3f')
-
-
-
-    #Test Data
-
-    for i in range(0, 10):
-        car.state = [i,0,0,0,0,0,0]
-        for j in range(5):
-            for k in range(5):
-                control = [0.01 * j, 0.01 * k]
-                #The NN input is an array containing the current state and the control
-                nn_input = np.append(car.state.copy(), control)
-                nn_inputs.append(nn_input)
-
-                car.step(control)
-
-                #The nn output is the next state
-                nn_result = car.state
-                nn_results.append(car.state)
-    df = pd.DataFrame(nn_inputs)
-    df.to_csv('NeuralNetworkPredictor/data/test/inputs.csv', index=False, float_format='%.3f')
-    df = pd.DataFrame(nn_results)
-    df.to_csv('NeuralNetworkPredictor/data/test/results.csv', index=False, float_format='%.3f')
-
-
 
 
 

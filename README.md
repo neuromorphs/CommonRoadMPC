@@ -3,6 +3,7 @@
 ## Installation
 I recommend using a virtual environement like conda.
 'pip install -r requirements.txt '
+'git submodule update --init --recursive'
 
 ## Run
 python multistep_mpc.py

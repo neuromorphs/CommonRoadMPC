@@ -115,6 +115,7 @@ class NeuralNetworkPredictor:
 
 if __name__ == '__main__':
 
+    #For direct testing
     predictor = NeuralNetworkPredictor(model_name="Dense-128-128-128-128-uniform-20")
 
 

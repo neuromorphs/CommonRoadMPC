@@ -4,6 +4,7 @@ from racing.car import Car
 from racing.track import Track
 from mppi_mpc.car_controller import CarController
 from constants import *
+from globals import *
 import matplotlib.pyplot as plt
 import os
 from tqdm import trange
@@ -18,33 +19,25 @@ def run_simulation(number_of_steps):
 
     for i in trange(number_of_steps):
 
-        next_control_sequence = car_controller.control_step()
-        chosen_trajectory, cost = car_controller.simulate_trajectory(
-            next_control_sequence
-        )
+        # print(i)
 
+        next_control_sequence = car_controller.control_step()
+      
         # Do the first step of the best control sequence
         car.step(next_control_sequence[0])
-        # Update car state
         car_controller.set_state(car.state)
 
-        # if car.state[0] > 100 or car.state[0] < 0 or car.state[1] > 80 or  car.state[0] < 0:
-
-        #     car.draw_history()
-        #     car.save_history()
-        #     return
-
-        # print(i)
-        # Comment this out for speedup
-        # car_controller.draw_simulated_history(0, chosen_trajectory)
-        car.draw_history("history.png")
-        # car.save_history()
+        if(DRAW_LIVE_ROLLOUTS):
+            chosen_trajectory, cost = car_controller.simulate_trajectory(next_control_sequence)
+            car_controller.draw_simulated_history(0, chosen_trajectory)
+        
+        if(DRAW_LIVE_HISTORY):
+            car.draw_history("live_history.png")
 
     car.draw_history()
     car.save_history()
 
-    # print(history)
-    # exit()
+
 
     """
     This is only for getting a feeling of how hight the different costs are... can be ignored
@@ -81,5 +74,5 @@ def run_simulation(number_of_steps):
 
 if __name__ == "__main__":
 
-    run_simulation(200)
+    run_simulation(SIMULATION_LENGTH)
 

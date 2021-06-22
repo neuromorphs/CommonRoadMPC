@@ -311,7 +311,7 @@ class CarController:
         # print("TIME FOR closest waypoint")
         # print(end - start)
 
-        aim_for_waypoint_index = (closest_waypoint_index + 5) % len(self.track.waypoints)
+        aim_for_waypoint_index = (closest_waypoint_index + 2) % len(self.track.waypoints)
 
         # print("closest_waypoint_index",closest_waypoint_index) 
         # print("aim_for_waypoint_index",aim_for_waypoint_index) 
@@ -328,7 +328,7 @@ class CarController:
 
         distance_cost_weight = 1
         # speed_cost_weight = 64
-        speed_cost_weight = 10 * (12 -   self.car.state[3])  #max speed = 12
+        speed_cost_weight = 10 * (MAX_SPEED -   self.car.state[3])  #max speed = 12
         # print("Speedcost_Weight", speed_cost_weight)
         progress_cost_weight =0
         # pursuit_cost_weight = 1

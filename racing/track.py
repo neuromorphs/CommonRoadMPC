@@ -4,7 +4,7 @@ import numpy as np
 from constants import *
 
 #Scale of the race track
-M_TO_PIXEL = 0.1
+M_TO_PIXEL = 0.2
 
 def squared_distance(p1, p2):
     squared_distance = abs(p1[0] - p2[0]) ** 2 + abs(p1[1] - p2[1]) ** 2
@@ -16,10 +16,14 @@ Represents the "real track", calculated by the l2race server
 class Track:
 
     def __init__(self):
+        #Oval
         # self.waypoints_x = 0.1 * np.array(oval_points_x)
         # self.waypoints_y = 0.1 *  np.array(oval_points_y)
+
+        #Track2
         self.waypoints_x = M_TO_PIXEL * np.array(track_2_points_x)
         self.waypoints_y = M_TO_PIXEL *  np.array(track_2_points_y)
+
         self.track_name = "Track 2"
         self.waypoints = [[self.waypoints_x[i], self.waypoints_y[i]] for i in range(len(self.waypoints_x))]
         self.initial_position = self.waypoints[0]

@@ -1,11 +1,19 @@
+# Environment Variables
 .vscode/*
 .vscode
-*.csv
+.env
+
+# Python
 __pycache__
 *.pyc
-test.py
+
+# Data and images
 *.png
-.env
+*.csv
+
+# Personal scripts
+test.py
+setup.sh
 
 #Neural Network Prediction
 nn_prediction/models/*
