@@ -18,15 +18,19 @@ class Track:
 
     def __init__(self):
         
+        track_info = np.load('racing/tracks/{}_info.npy'.format(TRACK_NAME), allow_pickle=True).item()
+        # print("track_info", track_info)
 
-        if(TRACK_NAME == "track_2"):
-            #Track2
-            self.waypoints_x = M_TO_PIXEL * np.array(track_2_points_x)
-            self.waypoints_y = M_TO_PIXEL *  np.array(track_2_points_y)
-        else:
-            #Oval
-            self.waypoints_x = 0.1 * np.array(oval_points_x)
-            self.waypoints_y = 0.1 *  np.array(oval_points_y)
+        self.waypoints_x =  M_TO_PIXEL * track_info['waypoint_x']
+        self.waypoints_y =  M_TO_PIXEL * track_info['waypoint_y']
+        # if(TRACK_NAME == "track_2"):
+        #     #Track2
+        #     self.waypoints_x = M_TO_PIXEL * np.array(track_2_points_x)
+        #     self.waypoints_y = M_TO_PIXEL *  np.array(track_2_points_y)
+        # else:
+        #     #Oval
+        #     self.waypoints_x = 0.1 * np.array(oval_points_x)
+        #     self.waypoints_y = 0.1 *  np.array(oval_points_y)
 
         self.track_name = TRACK_NAME
         self.waypoints = [[self.waypoints_x[i], self.waypoints_y[i]] for i in range(len(self.waypoints_x))]

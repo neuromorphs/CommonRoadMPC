@@ -10,9 +10,9 @@ T_EULER_STEP = 0.01
 #######         Experiments        #######
 ##########################################
 
-SIMULATION_LENGTH = 200
+SIMULATION_LENGTH = 500
 DRAW_LIVE_HISTORY = True
-DRAW_LIVE_ROLLOUTS = True
+DRAW_LIVE_ROLLOUTS = False
 PATH_TO_EXPERIMENT_RECORDINGS = "./ExperimentRecordings"
 
 
