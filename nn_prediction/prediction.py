@@ -50,7 +50,7 @@ class NeuralNetworkPredictor:
             # Normalize input
             state_and_control_normalized = self.scaler_x.transform([state_and_control])
             # Predict
-            predictions_normalized = self.model.predict(state_and_control_normalized)
+            predictions_normalized = self.model.predict_step(state_and_control_normalized)
             # Denormalize results
             prediction = self.scaler_y.inverse_transform(predictions_normalized)[0]
 
@@ -64,7 +64,6 @@ class NeuralNetworkPredictor:
         return prediction
 
 
-
     def predict_multiple_states(self, states, control_inputs):
         
         states_and_controls = np.column_stack((states, control_inputs))
@@ -72,10 +71,37 @@ class NeuralNetworkPredictor:
         if(self.normalize_data):
             # Normalize input
             states_and_controls_normalized = self.scaler_x.transform(states_and_controls)
-            # Predic
-            predictions_normalized = self.model.predict(states_and_controls_normalized)
+            # Predict
+            predictions_normalized = self.model.predict_step(states_and_controls_normalized)
             # Denormalize results
             predictions = self.scaler_y.inverse_transform(predictions_normalized)
+
+        else:
+            predictions = self.model.predict_step(states_and_controls)
+     
+        if self.predict_delta:
+            predictions = states + predictions
+        
+        return predictions
+
+    #Autoregressively predict multiple trajectories due to given initial states and a list of control sequences
+    def predict_multiple_trajectories(self, states, control_inputs):
+        
+        states_and_controls = np.column_stack((states, control_inputs))
+
+        trajectory_steps = []
+
+        if(self.normalize_data):
+            # Normalize input
+            states_and_controls_normalized = self.scaler_x.transform(states_and_controls)
+            # Predict
+
+            simulated_states = states_and_controls_normalized
+            for i in range(15):
+                simulated_states = self.model.predict_step(simulated_states)
+                trajectory_steps.append(simulated_states)
+            # Denormalize results
+            predictions = self.scaler_y.inverse_transform(trajectory_steps)
 
         else:
             predictions = self.model.predict(states_and_controls)
@@ -94,17 +120,14 @@ if __name__ == '__main__':
 
     start = time.time()
 
-    next_state = predictor.predict_multiple_states(
-        [
-            [41.900000000000006,13.600000000000001,0.0,7.0,0.0,0.0,0.0],
-            [41.900000000000006,13.600000000000001,0.0,7.0,0.0,0.0,0.0],
-        ],
-        [
-            [0.06644491781040185,-0.40862345615368234],
-            [0.06644491781040185,-0.40862345615368234],
-        ])
+    number_of_tests = 1
+    test_states = number_of_tests * [ [41.900000000000006,13.600000000000001,0.0,7.0,0.0,0.0,0.0]]
+    test_controls = number_of_tests * [  [0.06644491781040185,-0.40862345615368234]]
+
+    trajectories = predictor.predict_multiple_trajectories(test_states,test_controls)
+    print(trajectories.shape)
 
     end = time.time()
-    print("TIME FOR 2 Trajectoriy")
+    print("TIME FOR {} Trajectoriy".format(number_of_tests))
     print(end - start)
     # print("Next_state", next_state)

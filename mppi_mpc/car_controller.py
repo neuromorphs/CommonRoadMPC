@@ -205,6 +205,11 @@ class CarController:
             states = self.nn_predictor.predict_multiple_states(states, control_inputs)
             results.append(states)
 
+        # end = time.time()
+        # print("TIME FOR all {} Trajectories with nn".format(NUMBER_OF_TRAJECTORIES))
+        # print(end - start)
+
+        # start = time.time()
 
         results = np.array(results)
         results = np.swapaxes(results,0,1)
@@ -215,12 +220,13 @@ class CarController:
             cost = self.cost_function(result)
             costs.append(cost)
      
+        # end = time.time()
+        # print("TIME FOR evaluating all Trajectories with cost function")
+        # print(end - start)
 
         self.simulated_history = results
         self.simulated_costs = costs
-        # end = time.time()
-        # print("TIME FOR all Trajectories")
-        # print(end - start)
+       
 
         return results, costs
 
@@ -300,6 +306,11 @@ class CarController:
         max_distance = 5
 
         closest_waypoint_index = self.track.get_closest_index(self.state[:2])
+
+        # end = time.time()
+        # print("TIME FOR closest waypoint")
+        # print(end - start)
+
         aim_for_waypoint_index = (closest_waypoint_index + 5) % len(self.track.waypoints)
 
         # print("closest_waypoint_index",closest_waypoint_index) 
@@ -320,7 +331,7 @@ class CarController:
         speed_cost_weight = 10 * (12 -   self.car.state[3])  #max speed = 12
         # print("Speedcost_Weight", speed_cost_weight)
         progress_cost_weight =0
-        pursuit_cost_weight = 1
+        # pursuit_cost_weight = 1
 
         number_of_critical_states = 10
 
@@ -342,9 +353,9 @@ class CarController:
             speed_cost += abs((acceleration + 1)/ 2)
             distance_cost += abs(discount * distance_to_track)
 
-            closest_waypoint_index = self.track.get_closest_index(state[:2])
+            # closest_waypoint_index = self.track.get_closest_index(state[:2])
             # print("closest_waypoint_index", closest_waypoint_index)
-            pursuit_cost += closest_waypoint_index
+            # pursuit_cost += closest_waypoint_index
            
             if(distance_to_track > max_distance):
                 if(index < number_of_critical_states):
@@ -378,7 +389,7 @@ class CarController:
         # end = time.time()
         # print("TIME FOR COST FUNCTION")
         # print(end - start)
-
+        # exit()
         return cost
 
     def cost_per_step(self, state):
@@ -467,9 +478,6 @@ class CarController:
         # print("next_control_sequence",next_control_sequence)
 
         self.best_control_sequenct = next_control_sequence
-        
-
-
         return next_control_sequence
         # return best_conrol_sequence
 
@@ -531,7 +539,7 @@ class CarController:
             plt.legend(  fancybox=True, shadow=True, loc="best")
 
         
-        plt.savefig('sim_history.png')
+        plt.savefig('live_rollouts.png')
         return plt
 
     def save_history_sequence(self,control_inputs, state_historoy):
