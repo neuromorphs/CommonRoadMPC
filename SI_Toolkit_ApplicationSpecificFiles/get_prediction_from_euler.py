@@ -16,6 +16,7 @@ def get_prediction_for_testing_gui_from_euler(a, dataset, dt_sampling, predictor
     model_name = None
     if(predictor != "euler" and predictor != "odeint"):
         model_name = predictor
+        predictor = "nn"
 
     # region In either case testing is done on a data collected offline
     output_array = np.zeros(shape=(a.test_max_horizon+1, a.test_len, len(a.features)+1))
@@ -28,7 +29,7 @@ def get_prediction_for_testing_gui_from_euler(a, dataset, dt_sampling, predictor
 
     track = Track()
     car = Car(track)
-    car_controller = CarController(car, predictor=predictor, model_name = model_name)
+    car_controller = CarController(track, predictor=predictor, model_name = model_name)
     initial_state = dataset.loc[dataset.index[[0]], :].values[0][1:-2]
     car.state = initial_state
     car_controller.set_state(initial_state)

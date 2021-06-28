@@ -37,7 +37,8 @@ class Car:
 
         initial_position = track.initial_position
 
-        self.parameters = parameters_vehicle2()
+        # self.parameters = parameters_vehicle2()
+        self.parameters = parameters_vehicle1()
         self.state = init_st([initial_position[0], initial_position[1], 0, INITIAL_SPEED, 0, 0,0])
         # self.state = init_std([initial_position[0], initial_position[1], 0, INITIAL_SPEED, 0, 0,0], p= self.parameters)
         # self.state = init_mb([419, 136, 0, INITIAL_SPEED, 0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0], self.parameters)
@@ -83,8 +84,8 @@ class Car:
         t = np.arange(0, self.tControlSequence, self.tEulerStep) 
 
         # Next car position can be solved with euler or odeint
-        x_next = odeint(self.car_dynamics, self.state, t, args=(control_input, self.parameters))
-        # x_next = solveEuler(self.car_dynamics, self.state, t, args=(control_input, self.parameters))
+        # x_next = odeint(self.car_dynamics, self.state, t, args=(control_input, self.parameters))
+        x_next = solveEuler(self.car_dynamics, self.state, t, args=(control_input, self.parameters))
 
         self.time += self.tControlSequence
         self.state = x_next[-1]

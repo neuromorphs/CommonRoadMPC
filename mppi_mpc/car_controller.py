@@ -28,23 +28,24 @@ Can calculate the next control step due to the cost function
 '''
 
 class CarController:
-    def __init__(self, car, predictor="euler", model_name = None):
+    def __init__(self, track, predictor="euler", model_name = None):
         
         # Global
         self.tControlSequence = T_CONTROL  # [s] How long is a control input applied
 
         # Racing objects
-        self.car = car #The car that we want to control
-        self.state = self.car.state #The simulated state of the car
-        self.track = self.car.track #Track waypoints for drawing
+        self.car_state = [1,1,1,1,1,1,1]
+        self.track = track #Track waypoints for drawing
         
         # Control with common-road models
         self.predictior = predictor
+        # self.parameters = parameters_vehicle1()
         self.parameters = parameters_vehicle2()
         self.tEulerStep = T_EULER_STEP # [s] One step of solving the ODEINT or EULER
 
         # Control with neural network
-        if(self.predictior == "nn"):
+        if(predictor == "nn"):
+            print("Setting up controller with neural network")
             if( model_name is not None):
                 from nn_prediction.prediction import NeuralNetworkPredictor
                 self.nn_predictor = NeuralNetworkPredictor(model_name = model_name)
@@ -66,7 +67,7 @@ class CarController:
 
 
     def set_state(self, state):
-        self.state = state
+        self.car_state = state
     
 
     def update_trackline(self):
@@ -74,7 +75,7 @@ class CarController:
         waypoint_modulus = self.track.waypoints.copy()
         waypoint_modulus.extend(waypoint_modulus[:NUMBER_OF_NEXT_WAYPOINTS])
 
-        closest_to_car_position = self.track.get_closest_index(self.state[:2])
+        closest_to_car_position = self.track.get_closest_index(self.car_state[:2])
         waypoint_modulus = waypoint_modulus[closest_to_car_position + NUMBER_OF_IGNORED_CLOSEST_WAYPOINTS : closest_to_car_position+ NUMBER_OF_NEXT_WAYPOINTS + NUMBER_OF_IGNORED_CLOSEST_WAYPOINTS]
 
         self.trackline = geom.LineString(waypoint_modulus)
@@ -117,7 +118,7 @@ class CarController:
     '''
     def simulate_trajectory(self, control_inputs):
 
-        simulated_state = self.state
+        simulated_state = self.car_state
         simulated_trajectory = []
         cost = 0
         index = 0 
@@ -170,7 +171,7 @@ class CarController:
 
         results = []
 
-        states = np.array(len(control_inputs_distrubution[0]) * [self.car.state])
+        states = np.array(len(control_inputs_distrubution[0]) * [self.car_state])
         # print(states.shape)
         for control_inputs in control_inputs_distrubution:
 
@@ -261,7 +262,7 @@ class CarController:
         acceleration_cost = 0
 
         distance_cost_weight = 1
-        acceleration_cost_weight = 10 * (MAX_SPEED -   self.car.state[3]) #Adaptive speed cost weight
+        acceleration_cost_weight = 10 * (MAX_SPEED -   self.car_state[3]) #Adaptive speed cost weight
 
         number_of_critical_states = 10
         number_of_states = len(trajectory) 
@@ -272,7 +273,7 @@ class CarController:
 
             simulated_position = geom.Point(state[0],state[1])
             distance_to_track = simulated_position.distance(self.trackline)
-            acceleration = state[3] - self.car.state[3]
+            acceleration = state[3] - self.car_state[3]
 
             acceleration_cost += abs((acceleration + 1)/ 2)
             distance_cost += abs(discount * distance_to_track)
@@ -310,7 +311,7 @@ class CarController:
         control_sequences = self.sample_control_inputs_similar_to_last(self.best_control_sequenct)
         # control_sequences = u_dist #those are the handcrafted inputs
 
-        simulated_history, costs = self.simulate_trajectory_distribution_nn( control_sequences )
+        simulated_history, costs = self.simulate_trajectory_distribution( control_sequences )
 
         trajectory_index = 0    
         lowest_cost = 100000
@@ -373,14 +374,16 @@ class CarController:
 
 
         #Draw car position
-        p_x = self.state[0]
-        p_y = self.state[1]
+        p_x = self.car_state[0]
+        p_y = self.car_state[1]
         position_ax.scatter(p_x,p_y, c ="#FF0000", label="Current car position")
 
         #Draw waypoints
-        waypoint_index = self.track.get_closest_index(self.state[:2])
-        w_x = self.track.waypoints_x[waypoint_index + NUMBER_OF_IGNORED_CLOSEST_WAYPOINTS :waypoint_index+NUMBER_OF_NEXT_WAYPOINTS + NUMBER_OF_IGNORED_CLOSEST_WAYPOINTS]
-        w_y = self.track.waypoints_y[waypoint_index+ NUMBER_OF_IGNORED_CLOSEST_WAYPOINTS:waypoint_index+NUMBER_OF_NEXT_WAYPOINTS+ NUMBER_OF_IGNORED_CLOSEST_WAYPOINTS]
+        waypoint_index = self.track.get_closest_index(self.car_state[:2])
+        
+        waypoints = np.array(self.track.waypoints)
+        w_x = waypoints[waypoint_index+ NUMBER_OF_IGNORED_CLOSEST_WAYPOINTS:waypoint_index+NUMBER_OF_NEXT_WAYPOINTS+ NUMBER_OF_IGNORED_CLOSEST_WAYPOINTS,0]
+        w_y = waypoints[waypoint_index+ NUMBER_OF_IGNORED_CLOSEST_WAYPOINTS:waypoint_index+NUMBER_OF_NEXT_WAYPOINTS+ NUMBER_OF_IGNORED_CLOSEST_WAYPOINTS,1]
         position_ax.scatter(w_x,w_y, c ="#000000", label="Next waypoints")
 
         #Plot Chosen Trajectory

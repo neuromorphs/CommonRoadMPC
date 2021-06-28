@@ -15,8 +15,8 @@ def run_simulation(number_of_steps):
 
     track = Track()
     car = Car(track)
-    car_controller = CarController(car, predictor="nn", model_name="Dense-128-128-128-128-uniform-20")
-    # car_controller = CarController(car, predictor="euler")
+    # car_controller = CarController(track=track, predictor="nn", model_name="Dense-128-128-128-128-uniform-20")
+    car_controller = CarController(track=track, predictor="euler")
 
     for i in trange(number_of_steps):
         

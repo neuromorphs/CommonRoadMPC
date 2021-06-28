@@ -6,6 +6,7 @@
 # Python
 __pycache__
 *.pyc
+.DS_Store
 
 # Data and images
 *.png
