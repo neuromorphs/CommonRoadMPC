@@ -23,25 +23,39 @@ def train_network():
     # load the dataset
     #time, x1,x2,x3,x4,x5,x6,x7,u1,u2,x1n,x2n,x3n,x4n,x5n,x6n,x7n
     train_data = np.loadtxt('nn_prediction/training_data/{}'.format(TRAINING_DATA_FILE), delimiter=',')
+    print("train_data.shape", train_data.shape)
 
     # limit data for debugging
     # train_data = np.loadtxt('nn_prediction/training_data_small.csv', delimiter=',')
 
-    print("train_data.shape", train_data.shape)
-
-
 
     # split into input (X) and output (y) variables
-    #time, x1,x2,x3,x4,x5,x6,x7,u1,u2,x1n,x2n,x3n,x4n,x5n,x6n,x7n
+    #x1,x2,x3,x4,x5,x6,x7,u1,u2,
     x = train_data[:,1:10]
+    #x1n,x2n,x3n,x4n,x5n,x6n,x7n
     y = train_data[:,10:]
+
+
+
+
+    #time, x1,x2,x3,x4,x5,x6,x7,u1,u2
+    validation_data = np.loadtxt('ExperimentRecordings/Dataset-2/Test/Test.csv{}'.format(""), delimiter=',')
+    validation_data = validation_data[2:] #remove header
+
+    #x1,x2,x3,x4,x5,x6,x7,u1,u2,
+    x_validation = validation_data[:-1,1:10]
+    #x1n,x2n,x3n,x4n,x5n,x6n,x7n
+    y_validation = validation_data[1:,1:8]
+
 
     #delta is the difference between state and next_state
     delta =  y[:] - x[:,:7]
+    delta_validation = y_validation[:] - x_validation[:,:7]
 
     #if we want to train the network on the state changes instead of the state, use this
     if PREDICT_DELTA:
         y = delta
+        y_validation = delta_validation
 
 
     # Augmentation for lots of lots of data
@@ -54,6 +68,8 @@ def train_network():
     if(NORMALITE_DATA):
         x = scaler_x.transform(x)
         y = scaler_y.transform(y)
+        x_validation = scaler_x.transform(x_validation)
+        y_validation = scaler_y.transform(y_validation)
 
 
     # keras model
@@ -69,7 +85,7 @@ def train_network():
     model.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
 
     # fit
-    history = model.fit(x, y, epochs=NUMBER_OF_EPOCHS, batch_size=BATCH_SIZE, shuffle=True, validation_split=0.1)
+    history = model.fit(x, y, epochs=NUMBER_OF_EPOCHS, batch_size=BATCH_SIZE, shuffle=True, validation_split=0.1,  validation_data=(x_validation, y_validation))
 
     # Save model and normalization constants
     model_path = 'nn_prediction/models/{}'.format(MODEL_NAME)

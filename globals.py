@@ -1,5 +1,5 @@
 ##########################################
-##########         Global        #########
+########         Constants        ########
 ##########################################
 
 T_CONTROL = 0.2
@@ -10,9 +10,9 @@ T_EULER_STEP = 0.01
 #######         Experiments        #######
 ##########################################
 
-SIMULATION_LENGTH = 500
+SIMULATION_LENGTH = 100
 DRAW_LIVE_HISTORY = True
-DRAW_LIVE_ROLLOUTS = False
+DRAW_LIVE_ROLLOUTS = True
 PATH_TO_EXPERIMENT_RECORDINGS = "./ExperimentRecordings"
 
 
@@ -21,7 +21,7 @@ PATH_TO_EXPERIMENT_RECORDINGS = "./ExperimentRecordings"
 #########       Car & Track     ##########
 ##########################################
 
-INITIAL_SPEED = 8
+INITIAL_SPEED = 6
 CONTINUE_FROM_LAST_STATE = False
 
 TRACK_NAME = "track_2"
@@ -60,9 +60,9 @@ MAX_COST = 1000
 ##########################################
 
 # Training parameters
-MODEL_NAME = "Dense-128-128-128-128-uniform-40"
-TRAINING_DATA_FILE = "training_data_1000x1000x10.csv"
-NUMBER_OF_EPOCHS = 40
-BATCH_SIZE = 128
+MODEL_NAME = "VEHICLE_1_20"
+TRAINING_DATA_FILE = "training_data_vehicle_1_500x500x10.csv"
+NUMBER_OF_EPOCHS = 20
+BATCH_SIZE = 64
 PREDICT_DELTA = True
 NORMALITE_DATA = True
