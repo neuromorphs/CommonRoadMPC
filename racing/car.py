@@ -37,8 +37,8 @@ class Car:
 
         initial_position = track.initial_position
 
-        # self.parameters = parameters_vehicle2()
-        self.parameters = parameters_vehicle1()
+        # self.parameters = parameters_vehicle1()
+        self.parameters = parameters_vehicle2()
         self.state = init_st([initial_position[0], initial_position[1], 0, INITIAL_SPEED, 0, 0,0])
         # self.state = init_std([initial_position[0], initial_position[1], 0, INITIAL_SPEED, 0, 0,0], p= self.parameters)
         # self.state = init_mb([419, 136, 0, INITIAL_SPEED, 0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0], self.parameters)
