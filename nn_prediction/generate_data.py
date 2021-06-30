@@ -59,9 +59,9 @@ def generate_distribution():
 
         state = states[i]
         mu, sigma = 0, 0.4 # mean and standard deviation
-        u0_dist = np.random.normal(mu, sigma, number_of_trajectories)
+        u0_dist = np.random.uniform(-1, 1, number_of_trajectories)
         mu, sigma = 0, 0.5 # mean and standard deviation
-        u1_dist = np.random.normal(mu, sigma, number_of_trajectories)
+        u1_dist = np.random.uniform(-1, 1, number_of_trajectories)
 
         controls = np.column_stack((u0_dist, u1_dist))
         results = []
@@ -83,7 +83,7 @@ def generate_distribution():
 
         car.draw_history("test.png")
 
-        with open("nn_prediction/training_data_vehicle_1_500x500x10.csv", 'a', encoding='UTF8') as f:
+        with open("nn_prediction/training_data_uniform_conrol_500x500x10.csv", 'a', encoding='UTF8') as f:
             writer = csv.writer(f)
             time = 0
             for result in results:

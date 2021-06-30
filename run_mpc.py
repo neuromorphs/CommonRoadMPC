@@ -15,23 +15,24 @@ def run_simulation(number_of_steps):
 
     track = Track()
     car = Car(track)
-    # car_controller = CarController(track=track, predictor="nn", model_name="Dense-128-128-128-128-uniform-20")
-    car_controller = CarController(track=track, predictor="euler")
+    car_controller = CarController(track=track, predictor="nn", model_name="Dense-128-128-128-128-uniform-20")
+    # car_controller = CarController(track=track, predictor="euler")
 
     for i in trange(number_of_steps):
         
         next_control_sequence = car_controller.control_step()
       
-        # Do the first step of the best control sequence
-        car.step(next_control_sequence[0])
-        car_controller.set_state(car.state)
-
         if(DRAW_LIVE_ROLLOUTS):
             chosen_trajectory, cost = car_controller.simulate_trajectory(next_control_sequence)
+            # print("Cost of the chosen trajectory", cost)
             car_controller.draw_simulated_history(0, chosen_trajectory)
         
         if(DRAW_LIVE_HISTORY):
             car.draw_history("live_history.png")
+
+        # Do the first step of the best control sequence
+        car.step(next_control_sequence[0])
+        car_controller.set_state(car.state)
 
     car.draw_history()
     car.save_history()

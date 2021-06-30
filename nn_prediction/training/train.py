@@ -39,7 +39,7 @@ def train_network():
 
 
     #time, x1,x2,x3,x4,x5,x6,x7,u1,u2
-    validation_data = np.loadtxt('ExperimentRecordings/Dataset-2/Test/Test.csv{}'.format(""), delimiter=',')
+    validation_data = np.loadtxt('ExperimentRecordings/Dataset-1/Test/Test.csv{}'.format(""), delimiter=',', skiprows=5)
     validation_data = validation_data[2:] #remove header
 
     #x1,x2,x3,x4,x5,x6,x7,u1,u2,

@@ -92,6 +92,10 @@ class Car:
         self.state_history.append(x_next)
         self.control_history.append(control_input)
 
+        if ALWAYS_SAVE_LAST_STATE:
+            np.savetxt("racing/last_car_state.csv", self.state, delimiter=",", header="x1,x2,x3,x4,x5,x6,x7")
+
+
 
 
     def save_history(self, filename = None):
