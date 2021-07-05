@@ -6,6 +6,7 @@ from racing.car import Car
 from racing.track import Track
 from mppi_mpc.car_controller import CarController
 from constants import *
+from globals import *
 import matplotlib.pyplot as plt
 from tqdm import trange
 
@@ -17,16 +18,17 @@ car = Car(track)
 pi = math.pi
 
 
-def generate_distribution():
-
-    nn_inputs = []
-    nn_results = []
+def generate_distribution( number_of_initial_states = 500, number_of_trajectories = 500,number_of_steps_per_trajectory = 10):
+    '''
+    Generate a distribution of artificial training datapoints
+    and saves it to a .csv file in nn_prediction/training/data
+    @param number_of_initial_states{int} The number of random initial states
+    @param number_of_trajectories{int} The number of random trajectories that are simulated for every initial state
+    @param number_of_steps_per_trajectory{int} the length of the simulated trajectories
+    '''
 
     track = Track()
     car = Car(track)
-    number_of_initial_states = 500
-    number_of_trajectories = 500
-    number_of_steps_per_trajectory = 10
 
     car.state = [0,0,0,0,0,0,0]
 
@@ -38,7 +40,7 @@ def generate_distribution():
     delta_dist = np.random.uniform(-1,1, number_of_initial_states) 
 
     #velocity in face direction
-    v_dist = np.random.uniform(6, 15, number_of_initial_states) 
+    v_dist = np.random.uniform(0, 25, number_of_initial_states) 
 
     #Yaw Angle
     yaw_dist = np.random.uniform(-pi, pi, number_of_initial_states)
@@ -81,9 +83,9 @@ def generate_distribution():
                 results.append(state_and_control_and_future_state)
 
 
-        car.draw_history("test.png")
+        # car.draw_history("test.png")
 
-        with open("nn_prediction/training_data_uniform_conrol_500x500x10.csv", 'a', encoding='UTF8') as f:
+        with open("nn_prediction/training/data/{}".format(DATA_GENERATION_FILE), 'a', encoding='UTF8') as f:
             writer = csv.writer(f)
             time = 0
             for result in results:
@@ -98,5 +100,5 @@ def generate_distribution():
 
 if __name__ == "__main__":
 
-    generate_distribution()
+    generate_distribution( 1500, 500, 10)
 

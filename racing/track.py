@@ -23,6 +23,8 @@ class Track:
 
         self.waypoints_x =  M_TO_PIXEL * track_info['waypoint_x']
         self.waypoints_y =  M_TO_PIXEL * track_info['waypoint_y']
+        self.AngleNextCheckpointEast =  M_TO_PIXEL * track_info['AngleNextCheckpointEast']
+        self.AngleNextCheckpointRelative =  M_TO_PIXEL * track_info['AngleNextCheckpointRelative']
         # if(TRACK_NAME == "track_2"):
         #     #Track2
         #     self.waypoints_x = M_TO_PIXEL * np.array(track_2_points_x)

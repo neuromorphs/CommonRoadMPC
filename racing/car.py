@@ -150,7 +150,11 @@ class Car:
     """    
     def draw_history(self, filename = None):
         plt.clf()
-        plt.scatter(self.track.waypoints_x,self.track.waypoints_y)
+
+
+        angles = np.absolute(self.track.AngleNextCheckpointRelative)
+        # plt.scatter(self.track.waypoints_x,self.track.waypoints_y, c=angles)
+        plt.scatter(self.track.waypoints_x,self.track.waypoints_y, color="#000")
 
         plt.ylabel('Position History')
         s_x = []

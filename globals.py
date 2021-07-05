@@ -2,9 +2,6 @@
 ########         Constants        ########
 ##########################################
 
-from re import T
-
-
 T_CONTROL = 0.2
 T_EULER_STEP = 0.01
 
@@ -19,54 +16,61 @@ DRAW_LIVE_ROLLOUTS = False
 PATH_TO_EXPERIMENT_RECORDINGS = "./ExperimentRecordings"
 
 
-
 ##########################################
 #########       Car & Track     ##########
 ##########################################
 
-INITIAL_SPEED = 8
+INITIAL_SPEED = 9
 CONTINUE_FROM_LAST_STATE = False
 ALWAYS_SAVE_LAST_STATE = False
 
-TRACK_NAME = "track_2"
-M_TO_PIXEL = 0.15
-TRACK_WIDTH = 3
+TRACK_NAME = "track_3"
+M_TO_PIXEL = 0.1
+TRACK_WIDTH = 6
 
 
 ##########################################
-#########     Car Controller     #########
+####   Neural MPC Car Controller     #####
 ##########################################
+
+# Path Prediction
+CONTROLLER_PREDICTIOR = "nn"
+CONTROLLER_MODEL_NAME = "Dense-128-128-128-128-invariant-10"
 
 # Initializing parameters
-NUMBER_OF_INITIAL_TRAJECTORIES = 200
-INITIAL_STEERING_VARIANCE = 0.2
-INITIAL_ACCELERATION_VARIANCE = 0.0
+NUMBER_OF_INITIAL_TRAJECTORIES = 500
+INITIAL_STEERING_VARIANCE = 0.5
+INITIAL_ACCELERATION_VARIANCE = 0.5
 
 
 # Parameters for rollout
-NUMBER_OF_TRAJECTORIES = 2000
-STRATEGY_COVARIANCE = [[0.2, 0], [0, 0.2]]
+NUMBER_OF_TRAJECTORIES = 250
+STEP_STEERING_VARIANCE = 0.1
+STEP_ACCELERATION_VARIANCE = 0.1
 NUMBER_OF_STEPS_PER_TRAJECTORY = 10
 INVERSE_TEMP = 5
 
 # Relation to track
 NUMBER_OF_NEXT_WAYPOINTS = 20
 NUMBER_OF_IGNORED_CLOSEST_WAYPOINTS = 2
-DIST_TOLLERANCE = 4
 
 # Relations to car
-MAX_SPEED = 12
-MAX_COST = 400
+MAX_SPEED = 15
+MAX_COST = 1000
 
 
 ##########################################
 #########       NN Training     ##########
 ##########################################
 
+# Artificial data generation
+DATA_GENERATION_FILE = "training_data_0-25_1500x500x10.csv"
+
 # Training parameters
-MODEL_NAME = "Dense-128-128-128-128-uniform-40-3"
-TRAINING_DATA_FILE = "training_data_uniform_500x500x10.csv"
-NUMBER_OF_EPOCHS = 40
+MODEL_NAME = "Dense-256-256-256-128-high_speed_var-10-64"
+TRAINING_DATA_FILE = "training_data_0-25_1500x500x10.csv"
+NUMBER_OF_EPOCHS = 10
 BATCH_SIZE = 64
 PREDICT_DELTA = True
 NORMALITE_DATA = True
+CUT_INVARIANTS = True

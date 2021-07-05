@@ -57,7 +57,7 @@ class NeuralNetworkFinetuner:
         # load the dataset
         # time, x1,x2,x3,x4,x5,x6,x7,u1,u2,x1n,x2n,x3n,x4n,x5n,x6n,x7n
         train_data = np.loadtxt(
-            "nn_prediction/training_data/{}".format(FINETUNE_DATA_FILE), delimiter=","
+            "nn_prediction/training/data/{}".format(FINETUNE_DATA_FILE), delimiter=","
         )
 
         # limit data for debugging
