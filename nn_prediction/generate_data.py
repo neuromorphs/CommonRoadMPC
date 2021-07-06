@@ -9,11 +9,11 @@ from constants import *
 from globals import *
 import matplotlib.pyplot as plt
 from tqdm import trange
-
+import os
 
 
 track = Track()
-car = Car(track)
+car = Car(track, stay_on_track=False)
 
 pi = math.pi
 
@@ -27,8 +27,11 @@ def generate_distribution( number_of_initial_states = 500, number_of_trajectorie
     @param number_of_steps_per_trajectory{int} the length of the simulated trajectories
     '''
 
-    track = Track()
-    car = Car(track)
+    output_file = "nn_prediction/training/data/{}".format(DATA_GENERATION_FILE)
+    if os.path.exists(output_file):
+        os.remove(output_file)
+
+
 
     car.state = [0,0,0,0,0,0,0]
 
@@ -40,7 +43,7 @@ def generate_distribution( number_of_initial_states = 500, number_of_trajectorie
     delta_dist = np.random.uniform(-1,1, number_of_initial_states) 
 
     #velocity in face direction
-    v_dist = np.random.uniform(0, 25, number_of_initial_states) 
+    v_dist = np.random.uniform(5, 15, number_of_initial_states) 
 
     #Yaw Angle
     yaw_dist = np.random.uniform(-pi, pi, number_of_initial_states)
@@ -61,9 +64,12 @@ def generate_distribution( number_of_initial_states = 500, number_of_trajectorie
 
         state = states[i]
         mu, sigma = 0, 0.4 # mean and standard deviation
-        u0_dist = np.random.uniform(-1, 1, number_of_trajectories)
+        u0_dist = np.random.normal(mu, sigma , number_of_trajectories)
         mu, sigma = 0, 0.5 # mean and standard deviation
-        u1_dist = np.random.uniform(-1, 1, number_of_trajectories)
+        u1_dist = np.random.normal(mu, sigma , number_of_trajectories)
+
+        # u0_dist = np.random.uniform(-1, 1, number_of_trajectories)
+        # u1_dist = np.random.uniform(-1, 1, number_of_trajectories)
 
         controls = np.column_stack((u0_dist, u1_dist))
         results = []
@@ -85,7 +91,7 @@ def generate_distribution( number_of_initial_states = 500, number_of_trajectorie
 
         # car.draw_history("test.png")
 
-        with open("nn_prediction/training/data/{}".format(DATA_GENERATION_FILE), 'a', encoding='UTF8') as f:
+        with open(output_file, 'a', encoding='UTF8') as f:
             writer = csv.writer(f)
             time = 0
             for result in results:
@@ -100,5 +106,5 @@ def generate_distribution( number_of_initial_states = 500, number_of_trajectorie
 
 if __name__ == "__main__":
 
-    generate_distribution( 1500, 500, 10)
+    generate_distribution( 50, 30, 10)
 

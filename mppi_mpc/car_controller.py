@@ -66,7 +66,6 @@ class CarController:
         self.simulated_costs = []  # Hostory of simulated car states
         self.last_control_input = [0, 0]
         self.best_control_sequenct = []
-        self.emergency_brake = False
 
         # Data collection
         self.collect_distance_costs = []
@@ -92,7 +91,7 @@ class CarController:
         '''
         Update the the next points of the trackline due to the current car state
         '''
-        # only Next NUMBER_OF_NEXT_WAYPOINTS points of the track
+        # save only Next NUMBER_OF_NEXT_WAYPOINTS points of the track
         waypoint_modulus = self.track.waypoints.copy()
         waypoint_modulus.extend(waypoint_modulus[:NUMBER_OF_NEXT_WAYPOINTS])
 
@@ -104,7 +103,6 @@ class CarController:
             + NUMBER_OF_IGNORED_CLOSEST_WAYPOINTS
         )
 
-        # print("first/last wp", first_waypoint, last_waypoint)
         waypoint_modulus = waypoint_modulus[first_waypoint:last_waypoint]
 
         self.trackline = geom.LineString(waypoint_modulus)
@@ -198,21 +196,6 @@ class CarController:
         self.simulated_history = results
         self.simulated_costs = costs
 
-
-        # with open(r'name.csv', 'a') as f:
-        #     for i in range(len(control_inputs_distrubution)):
-        #         trajectory = np.array(results[i])
-        #         control_sequence = control_inputs_distrubution[i]
-        #         # print(trajectory.shape)
-        #         # print("control", control_sequence.shape)
-
-        #         state_and_control_and_next_state = np.column_stack((trajectory[:-1], control_sequence[:-1], trajectory[1:]))
-                
-        #         # print("state_and_control_and_next_state", state_and_control_and_next_state)
-        #         writer = csv.writer(f)
-        #         for a in state_and_control_and_next_state:
-        #             writer.writerow(a)
-
         return results, costs
 
 
@@ -262,27 +245,23 @@ class CarController:
 
     def sample_control_inputs(self):
 
-        # steering = np.random.uniform(-1, 1, NUMBER_OF_INITIAL_TRAJECTORIES * NUMBER_OF_STEPS_PER_TRAJECTORY)
-        # acceleration = np.random.uniform( -0.5, 0.5, NUMBER_OF_INITIAL_TRAJECTORIES * NUMBER_OF_STEPS_PER_TRAJECTORY)
         steering = np.random.normal(0, INITIAL_STEERING_VARIANCE, NUMBER_OF_INITIAL_TRAJECTORIES * NUMBER_OF_STEPS_PER_TRAJECTORY)
         acceleration = np.random.normal( 0, INITIAL_ACCELERATION_VARIANCE, NUMBER_OF_INITIAL_TRAJECTORIES * NUMBER_OF_STEPS_PER_TRAJECTORY)
         
-
-        # if(self.emergency_brake):
-        # else:
-        #     acceleration = np.random.uniform(-1,0, NUMBER_OF_INITIAL_TRAJECTORIES *NUMBER_OF_STEPS_PER_TRAJECTORY)
 
         control_input_sequences = np.column_stack((steering, acceleration))
         control_input_sequences = np.reshape(
             control_input_sequences,
             (NUMBER_OF_INITIAL_TRAJECTORIES, NUMBER_OF_STEPS_PER_TRAJECTORY, 2),
         )
-        # print("control sequences",control_input_sequences)
         return control_input_sequences
 
     def sample_control_inputs_similar_to_last(self, last_control_sequence):
+
+        # Chose sampling method by uncommenting 
         # return self.sample_control_inputs()
         # return self.static_control_inputs()
+
         # In case we always want the initial variance
         if self.emergency_brake:
             return self.sample_control_inputs()
@@ -329,23 +308,20 @@ class CarController:
     def cost_function(self, trajectory):
 
         distance_cost = 0
-        acceleration_cost = 0
         angle_cost = 0
 
         distance_cost_weight = 1
         terminal_cost_weight = 1
-        angle_cost_weight = 0.3
-        acceleration_cost_weight = 10 * (  MAX_SPEED - self.car_state[3])  # Adaptive speed cost weight
-        if self.emergency_brake:
-            acceleration_cost_weight = 0
-        number_of_critical_states = 10
+        angle_cost_weight = 2
+
         number_of_states = len(trajectory)
         index = 0
 
         angles = np.absolute(self.track.AngleNextCheckpointRelative)
         waypoint_index = self.track.get_closest_index(self.car_state[:2])
-        angles = angles[waypoint_index: waypoint_index + 10]
-        angle_sum = np.sum(angles)
+        angles = angles[waypoint_index + ANGLE_COST_INDEX_START: waypoint_index + ANGLE_COST_INDEX_STOP]
+        angles_squared = np.absolute(angles) #np.square(angles)
+        angle_sum = np.sum(angles_squared)
         # print( angle_sum)
 
 
@@ -353,20 +329,14 @@ class CarController:
             discount = (number_of_states - 0.1 * index) / number_of_states
 
             simulated_position = geom.Point(state[0], state[1])
-            distance_to_track = simulated_position.distance(self.trackline)
-            # distance_to_track = distance_to_track ** 2
-            acceleration = state[3] - self.car_state[3]
-
-            acceleration_cost += abs((acceleration + 1) / 2)
-            distance_cost += abs(discount * distance_to_track)
+            distance_to_track = (simulated_position.distance(self.trackline))
+            distance_to_track = distance_to_track ** 2
+            # distance_cost += abs(discount * distance_to_track)
 
             # Don't leave track!
             if distance_to_track > TRACK_WIDTH:
-                # if(index < number_of_critical_states):
                 distance_cost += 1000
             index += 1
-
-        acceleration_cost = 1 / acceleration_cost
 
         # Terminal Cost
         terminal_state = trajectory[-1]
@@ -375,11 +345,9 @@ class CarController:
         terminal_cost = self.terminal_cost(terminal_state)
 
         self.collect_distance_costs.append(distance_cost)
-        self.collect_acceleration_costs.append(acceleration_cost)
 
         cost = (
             distance_cost_weight * distance_cost
-            + acceleration_cost_weight * acceleration_cost
             + terminal_cost_weight * terminal_cost
             + angle_cost_weight * angle_cost
         )
@@ -399,17 +367,13 @@ class CarController:
 
         terminal_speed = terminal_state[3]
 
-
-        braking = max(self.car_state[3] - terminal_state[3], 0)
- 
-
         terminal_cost += 3 * abs(terminal_distance_to_track)
-        terminal_cost += 0.15 * abs(15 - terminal_state[3])
+        terminal_cost += 4000 * abs(1/terminal_speed)
 
+        #Min speed
         if terminal_state[3] < 5:
-            terminal_cost += 3 * abs(5 - terminal_state[3])
-        # terminal_cost += 100 * braking
-        # print("terminal_cost", terminal_cost)
+            terminal_cost += 3 * abs(5 - terminal_speed)
+      
         return max(0, terminal_cost)
 
     """
@@ -417,7 +381,6 @@ class CarController:
     """
 
     def control_step(self):
-        # print("Emergency brake", self.emergency_brake)
         self.update_trackline()
         self.last_control_input[0] = min(self.last_control_input[0], 1)
         self.last_control_input[1] = min(self.last_control_input[1], 0.5)
@@ -425,10 +388,7 @@ class CarController:
         control_sequences = self.sample_control_inputs_similar_to_last(
             self.best_control_sequenct
         )
-        # control_sequences = u_dist #those are the handcrafted inputs
 
-        
- 
         simulated_history, costs = self.simulate_trajectory_distribution(control_sequences)
 
         lowest_cost = 100000
@@ -453,12 +413,10 @@ class CarController:
 
         # Finding weighted avg input
         if weights.max() != 0:
-            self.emergency_brake = False
             next_control_sequence = np.average(
                 control_sequences, axis=0, weights=weights
             )
         else:
-            # self.emergency_brake = True
             next_control_sequence = best_conrol_sequence
 
         next_control_sequence = best_conrol_sequence

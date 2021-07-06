@@ -15,7 +15,9 @@ from vehiclemodels.vehicle_dynamics_mb import vehicle_dynamics_mb
 
 from globals import *
 from util import *
+import shapely.geometry as geom
 
+import math
 import numpy as np
 from scipy.integrate import odeint
 import matplotlib.pyplot as plt
@@ -33,13 +35,14 @@ import csv
 Represents the "real car", calculated by the l2race server
 '''
 class Car:
-    def __init__(self,track = []):
+    def __init__(self,track = [], stay_on_track = True):
 
         initial_position = track.initial_position
 
         # self.parameters = parameters_vehicle1()
         self.parameters = parameters_vehicle2()
         self.state = init_st([initial_position[0], initial_position[1], 0, INITIAL_SPEED, 0, 0,0])
+        self.stay_on_track = stay_on_track
         # self.state = init_std([initial_position[0], initial_position[1], 0, INITIAL_SPEED, 0, 0,0], p= self.parameters)
         # self.state = init_mb([419, 136, 0, INITIAL_SPEED, 0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0], self.parameters)
         
@@ -49,6 +52,8 @@ class Car:
         self.state_history = [] #Hostory of real car states
         self.control_history = [] #History of controls applied every timestep
         self.track = track #Track waypoints for drawing
+        self.trackline  = geom.LineString(track.waypoints.copy())
+        self.lap_times = []
 
         # For continuous experiment, we can start, where we last ended
         if CONTINUE_FROM_LAST_STATE:
@@ -82,7 +87,7 @@ class Car:
     '''
     def step(self, control_input):
         t = np.arange(0, self.tControlSequence, self.tEulerStep) 
-
+        original_state = self.state.copy()
         # Next car position can be solved with euler or odeint
         # x_next = odeint(self.car_dynamics, self.state, t, args=(control_input, self.parameters))
         x_next = solveEuler(self.car_dynamics, self.state, t, args=(control_input, self.parameters))
@@ -91,6 +96,30 @@ class Car:
         self.state = x_next[-1]
         self.state_history.append(x_next)
         self.control_history.append(control_input)
+
+        # Check if car is still on the track
+        if(self.stay_on_track):
+            car_position = geom.Point(self.state[:2])
+            distance_to_track = car_position.distance(self.trackline)
+            
+            if(distance_to_track > TRACK_WIDTH):
+                np.savetxt("racing/last_car_state.csv", self.state, delimiter=",", header="x1,x2,x3,x4,x5,x6,x7")
+                self.save_history()
+                self.draw_history()
+                print("Car left the track", distance_to_track)
+                exit()
+            
+        # Check if lap completed
+        if(original_state[0] < self.track.waypoints_x[0] and self.state[0] >= self.track.waypoints_x[0]): #If passes finish line
+            x_difference = self.state[0] - self.track.waypoints_x[0] #How much is car further than finish line
+            x_speed = math.cos(original_state[4]) * original_state[3]   #X component of velocity
+            time_difference = x_difference / x_speed    #how long ago did the car cross the finish line
+            lap_time = self.time - time_difference # Accurate lap time is the current time of the car - the time passed since crossing the line
+
+            print("completed track, lap_time: ", lap_time)
+            self.lap_times.append(lap_time)
+            if EXIT_AFTER_ONE_LAP:
+                exit()
 
         if ALWAYS_SAVE_LAST_STATE:
             np.savetxt("racing/last_car_state.csv", self.state, delimiter=",", header="x1,x2,x3,x4,x5,x6,x7")
@@ -115,7 +144,6 @@ class Car:
         cut_state_history = state_history[0::20]
         now = datetime.now()
         now = now.strftime("%Y-%m-%d %H:%M:%S")
-        print("Today's date:", now)
     
         file = 'ExperimentRecordings/history-{}.csv'.format(now)
         if filename is not None:
@@ -135,9 +163,7 @@ class Car:
             time = 0
             for i in range(len(cut_state_history)):
 
-                state_and_control = np.append(cut_state_history[i],control_history[i])
-                print("state_and_control",state_and_control)
-               
+                state_and_control = np.append(cut_state_history[i],control_history[i])               
                 time_state_and_control = np.append(time, state_and_control)
                 writer.writerow(time_state_and_control)
                 time = round(time+self.tControlSequence, 2)

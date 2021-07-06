@@ -80,9 +80,9 @@ def train_network():
 
     # keras model
     model = Sequential()
-    model.add(Dense(256, input_dim=7, activation='tanh'))
-    model.add(Dense(256, activation='tanh'))
-    model.add(Dense(256, activation='tanh'))
+    model.add(Dense(128, input_dim=7, activation='tanh'))
+    model.add(Dense(128, activation='tanh'))
+    model.add(Dense(128, activation='tanh'))
     model.add(Dense(128, activation='tanh'))
     model.add(Dense(7))
 
