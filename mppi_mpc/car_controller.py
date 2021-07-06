@@ -262,10 +262,6 @@ class CarController:
         # return self.sample_control_inputs()
         # return self.static_control_inputs()
 
-        # In case we always want the initial variance
-        if self.emergency_brake:
-            return self.sample_control_inputs()
-
         # Not initialized
         if len(last_control_sequence) == 0:
             return self.sample_control_inputs()

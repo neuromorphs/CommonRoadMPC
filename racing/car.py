@@ -88,6 +88,7 @@ class Car:
     def step(self, control_input):
         t = np.arange(0, self.tControlSequence, self.tEulerStep) 
         original_state = self.state.copy()
+        
         # Next car position can be solved with euler or odeint
         # x_next = odeint(self.car_dynamics, self.state, t, args=(control_input, self.parameters))
         x_next = solveEuler(self.car_dynamics, self.state, t, args=(control_input, self.parameters))
@@ -120,6 +121,9 @@ class Car:
             self.lap_times.append(lap_time)
             if EXIT_AFTER_ONE_LAP:
                 exit()
+
+        if DRAW_LIVE_HISTORY:
+            self.draw_history("live_history.png")
 
         if ALWAYS_SAVE_LAST_STATE:
             np.savetxt("racing/last_car_state.csv", self.state, delimiter=",", header="x1,x2,x3,x4,x5,x6,x7")
@@ -194,8 +198,6 @@ class Car:
                 velocity.append(state[3]) 
 
         index = 0
-        color_index = format(int(255) , '02x') 
-        color = "#5500%s" % (color_index)
         scatter = plt.scatter(s_x,s_y, c=velocity, cmap = cm.jet)
         index += 1
 
