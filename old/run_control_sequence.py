@@ -1,14 +1,14 @@
+# This file is for simulating a saved control sequence
+
 import numpy as np
 import math
-from car import Car
-from car_controller import CarController
-from track import Track
+from racing.car import Car
+from mppi_mpc.car_controller import CarController
+from racing.track import Track
 from constants import *
 import matplotlib.pyplot as plt
-
 from tqdm import trange
 
-# FILE_NAME = "ControlSequences/burnout.csv"
 FILE_NAME = "ControlSequences/control_history.csv"
 
 control_sequence = np.loadtxt(open(FILE_NAME, "rb"), delimiter=",", skiprows=1)

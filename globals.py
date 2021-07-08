@@ -2,6 +2,9 @@
 ########         Constants        ########
 ##########################################
 
+from os import terminal_size
+
+
 T_CONTROL = 0.2
 T_EULER_STEP = 0.01
 
@@ -24,6 +27,7 @@ INITIAL_SPEED = 13
 CONTINUE_FROM_LAST_STATE = False
 ALWAYS_SAVE_LAST_STATE = False
 EXIT_AFTER_ONE_LAP = False
+COLLECT_LAP_TIMES = True
 
 TRACK_NAME = "track_2"
 M_TO_PIXEL = 0.1
@@ -41,13 +45,13 @@ CONTROLLER_MODEL_NAME = "Dense-128-128-128-128-invariant-10" # Accurate
 
 
 # Initializing parameters
-NUMBER_OF_INITIAL_TRAJECTORIES = 2500
+NUMBER_OF_INITIAL_TRAJECTORIES = 1000
 INITIAL_STEERING_VARIANCE = 0.5
 INITIAL_ACCELERATION_VARIANCE = 0.5
 
 
 # Parameters for rollout
-NUMBER_OF_TRAJECTORIES = 250
+NUMBER_OF_TRAJECTORIES = 500
 STEP_STEERING_VARIANCE = 0.1
 STEP_ACCELERATION_VARIANCE = 0.1
 NUMBER_OF_STEPS_PER_TRAJECTORY = 15
@@ -69,12 +73,13 @@ MAX_COST = 1000
 ##########################################
 
 # Artificial data generation
-DATA_GENERATION_FILE = "training_data_5-15_50x30x10.csv"
+# The training data is saved/retreived in nn_prediction/training/data/[filename]
+DATA_GENERATION_FILE = "training_data_sequential.csv"
 
 # Training parameters
-MODEL_NAME = "Dense-128-128-128-128-small"
-TRAINING_DATA_FILE = "training_data_5-15_50x30x10.csv"
-NUMBER_OF_EPOCHS = 150
+MODEL_NAME = "Dense-128-128-128-128-sequential"
+TRAINING_DATA_FILE = "training_data_sequential.csv"
+NUMBER_OF_EPOCHS = 140
 BATCH_SIZE = 128
 PREDICT_DELTA = True
 NORMALITE_DATA = True

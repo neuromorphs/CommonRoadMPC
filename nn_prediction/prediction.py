@@ -1,7 +1,7 @@
 import os
 import numpy as np
-from keras.models import Model, Sequential
-from keras.layers import Dense
+from tensorflow.python.keras.models import Model, Sequential
+from tensorflow.python.keras.layers import Dense
 from tensorflow import keras
 from sklearn import preprocessing
 import joblib

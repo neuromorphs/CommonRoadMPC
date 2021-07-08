@@ -1,16 +1,9 @@
 matplotlib
-numpy
+numpy==1.19.5
 scipy
 pandas
 pysindy
 IPython
 shapely
 tqdm
-
-
-#Tensorflow:
-#depending if GPU is available
-twnsorflow
-#tensorflow-gpu
-
-keras 
+tensorflow==2.5.0

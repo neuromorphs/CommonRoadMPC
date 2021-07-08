@@ -30,7 +30,6 @@ import csv
 
 
 
-
 '''
 Represents the "real car", calculated by the l2race server
 '''
@@ -67,13 +66,17 @@ class Car:
                 print("racing/last_car_state.csv not found, chosing hardcoded initial value")
 
 
-
-
-
-    '''
-    Dynamics of the real car
-    '''
+ 
     def car_dynamics(self,x, t, u, p):
+        """
+        Dynamics of the simulated car from common road
+        To use other car dynamics than the defailt ones, comment out here
+        @param x: The cat's state
+        @param t: array of times where the state has to be evaluated
+        @param u: Control input that is applied on the car
+        @param p: The car's physical parameters
+        @returns: the commonroad car dynamics function, that can be integrated for calculating the state evolution
+        """
         # f = vehicle_dynamics_ks(x, u, p)
         f = vehicle_dynamics_st(x, u, p)
         # f = vehicle_dynamics_std(x, u, p)
@@ -82,10 +85,13 @@ class Car:
 
    
 
-    '''
-    Moves the car one step due to a given control input
-    '''
     def step(self, control_input):
+        '''
+        Move the car one step due to a given control input
+        Is also able to check if the car crossed the finish line of the track and collect lap times
+        Draw the car's history 
+        @param control_input {control input} 
+        '''
         t = np.arange(0, self.tControlSequence, self.tEulerStep) 
         original_state = self.state.copy()
         
@@ -111,20 +117,24 @@ class Car:
                 exit()
             
         # Check if lap completed
-        if(original_state[0] < self.track.waypoints_x[0] and self.state[0] >= self.track.waypoints_x[0]): #If passes finish line
-            x_difference = self.state[0] - self.track.waypoints_x[0] #How much is car further than finish line
-            x_speed = math.cos(original_state[4]) * original_state[3]   #X component of velocity
-            time_difference = x_difference / x_speed    #how long ago did the car cross the finish line
-            lap_time = self.time - time_difference # Accurate lap time is the current time of the car - the time passed since crossing the line
+        if COLLECT_LAP_TIMES:
+            if(original_state[0] < self.track.waypoints_x[0] and self.state[0] >= self.track.waypoints_x[0]): #If passes finish line
+                x_difference = self.state[0] - self.track.waypoints_x[0] #How much is car further than finish line
+                x_speed = math.cos(original_state[4]) * original_state[3]   #X component of velocity
+                time_difference = x_difference / x_speed    #how long ago did the car cross the finish line
+                lap_time = self.time - time_difference # Accurate lap time is the current time of the car - the time passed since crossing the line
 
-            print("completed track, lap_time: ", lap_time)
-            self.lap_times.append(lap_time)
-            if EXIT_AFTER_ONE_LAP:
-                exit()
+                print("completed track, lap_time: ", lap_time)
+                self.lap_times.append(lap_time)
+                if EXIT_AFTER_ONE_LAP:
+                    self.save_history()
+                    self.draw_history()
+                    exit()
 
         if DRAW_LIVE_HISTORY:
             self.draw_history("live_history.png")
 
+        # If we want to continue where we stopped
         if ALWAYS_SAVE_LAST_STATE:
             np.savetxt("racing/last_car_state.csv", self.state, delimiter=",", header="x1,x2,x3,x4,x5,x6,x7")
 
@@ -132,6 +142,11 @@ class Car:
 
 
     def save_history(self, filename = None):
+        '''
+        Save all past states of the car into a csv file
+        @param filename <string>: Optional: The csv file's name. if left empty the files are saved into the ExperimentRecordings folder with the current datetime as name. 
+        '''
+
         print("Saving history...")
         
         np.savetxt("racing/last_car_state.csv", self.state, delimiter=",", header="x1,x2,x3,x4,x5,x6,x7")
@@ -174,16 +189,16 @@ class Car:
 
 
     
-
-    """
-    draws the history (position and speed) of the car into a plot
-    """    
     def draw_history(self, filename = None):
+        '''
+        Plot all past states of the car into a csv file
+        @param filename <string>: Optional: The image's name. if left empty the files are saved into the ExperimentRecordings folder with the current datetime as name. 
+        '''
         plt.clf()
 
 
         angles = np.absolute(self.track.AngleNextCheckpointRelative)
-        # plt.scatter(self.track.waypoints_x,self.track.waypoints_y, c=angles)
+        # plt.scatter(self.track.waypoints_x,self.track.waypoints_y, c=angles) #track color depending on angles
         plt.scatter(self.track.waypoints_x,self.track.waypoints_y, color="#000")
 
         plt.ylabel('Position History')
