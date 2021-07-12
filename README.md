@@ -2,19 +2,32 @@
 This project is a lite version of the L2Race project. It is optimized for implementing controllers.
 
 There is a neural network based MPC already implemented. 
-Further information aboir the MPC contact me: bollif@ethz.ch
+For further information about the MPC contact me: bollif@ethz.ch
 
 ## Setup
-I recommend using a virtual environement like conda.
-Make sure you add the submodules.
+
+I recommend using VSCode and a virtual environement like conda.
+Make sure you add the git submodules.
+```shell script
+git clone --recursive https://github.com/neuromorphs/CommonRoadMPC.git
+cd CommonRoadMPC
+```
+
+Create the conda environment:
+```shell script
+conda create --name cr
+conda activate cr
+```
+
+Install requirements:
 ```shell script
 pip install -r requirements.txt
-git submodule update --init --recursive
 ```
 If you use miniconda, there might be some missing dependancies, just install them via pip.
 
+
 ## Run
-make sure your conda environment is activated.
+Make sure your conda environment is activated.
 If you work from terminal, run:
 ```shell script
 export PYTHONPATH=./
@@ -34,6 +47,19 @@ For settings of the Car/Track, please check globals.py
 For implementing an own contoller you won't need the following subfolders(they only belong to the neural MPC): mppi_mpc, nn_prediction, SI_Toolkit, SI_Tookit_ApplicationSpecificFiles, Old.
 
 If you need to generate training data for a neural network, you can check out nn_prediction/generate_data.py.
+
+
+## Neural MPC controller
+You can run the simulation with the already implemented NueralMPC controller:
+
+Download the Keras models from: https://www.dropbox.com/sh/wxihelna93wnl24/AAC-79Yo3M6xw5G2O832aiPia?dl=0 \
+and place them into the folder nn_prediction/models
+(the models folder might not exist: just create it.)
+
+To start the simulation:
+```shell script
+python run_mpc.py
+```
 
 
 ## Terminology:

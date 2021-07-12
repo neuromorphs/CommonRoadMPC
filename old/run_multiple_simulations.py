@@ -1,4 +1,6 @@
-from multi_step_mpc import *
+# This file is for running multiple simulations
+
+from run_mpc import *
 
 
 NUMBER_OF_SIMULATIONS = 10

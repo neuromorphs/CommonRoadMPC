@@ -2,7 +2,7 @@
 ########         Constants        ########
 ##########################################
 
-from re import T
+from os import terminal_size
 
 
 T_CONTROL = 0.2
@@ -13,60 +13,74 @@ T_EULER_STEP = 0.01
 #######         Experiments        #######
 ##########################################
 
-SIMULATION_LENGTH = 400
+SIMULATION_LENGTH = 1000
 DRAW_LIVE_HISTORY = True
 DRAW_LIVE_ROLLOUTS = False
 PATH_TO_EXPERIMENT_RECORDINGS = "./ExperimentRecordings"
-
 
 
 ##########################################
 #########       Car & Track     ##########
 ##########################################
 
-INITIAL_SPEED = 8
+INITIAL_SPEED = 13
 CONTINUE_FROM_LAST_STATE = False
 ALWAYS_SAVE_LAST_STATE = False
+EXIT_AFTER_ONE_LAP = False
+COLLECT_LAP_TIMES = True
 
 TRACK_NAME = "track_2"
-M_TO_PIXEL = 0.15
-TRACK_WIDTH = 3
+M_TO_PIXEL = 0.1
+TRACK_WIDTH = 4
 
 
 ##########################################
-#########     Car Controller     #########
+####   Neural MPC Car Controller     #####
 ##########################################
+
+# Path Prediction
+CONTROLLER_PREDICTIOR = "nn"
+CONTROLLER_MODEL_NAME = "Dense-128-128-128-128-invariant-10" # Accurate
+# CONTROLLER_MODEL_NAME = "Dense-128-128-128-128-small" # Small training data
+
 
 # Initializing parameters
-NUMBER_OF_INITIAL_TRAJECTORIES = 200
-INITIAL_STEERING_VARIANCE = 0.2
-INITIAL_ACCELERATION_VARIANCE = 0.0
+NUMBER_OF_INITIAL_TRAJECTORIES = 1000
+INITIAL_STEERING_VARIANCE = 0.5
+INITIAL_ACCELERATION_VARIANCE = 0.5
 
 
 # Parameters for rollout
-NUMBER_OF_TRAJECTORIES = 2000
-STRATEGY_COVARIANCE = [[0.2, 0], [0, 0.2]]
-NUMBER_OF_STEPS_PER_TRAJECTORY = 10
+NUMBER_OF_TRAJECTORIES = 500
+STEP_STEERING_VARIANCE = 0.1
+STEP_ACCELERATION_VARIANCE = 0.1
+NUMBER_OF_STEPS_PER_TRAJECTORY = 15
 INVERSE_TEMP = 5
 
 # Relation to track
 NUMBER_OF_NEXT_WAYPOINTS = 20
-NUMBER_OF_IGNORED_CLOSEST_WAYPOINTS = 2
-DIST_TOLLERANCE = 4
+NUMBER_OF_IGNORED_CLOSEST_WAYPOINTS = 1
+ANGLE_COST_INDEX_START = 5
+ANGLE_COST_INDEX_STOP = 15
 
 # Relations to car
-MAX_SPEED = 12
-MAX_COST = 400
+MAX_SPEED = 15
+MAX_COST = 1000
 
 
 ##########################################
 #########       NN Training     ##########
 ##########################################
 
+# Artificial data generation
+# The training data is saved/retreived in nn_prediction/training/data/[filename]
+DATA_GENERATION_FILE = "training_data_sequential.csv"
+
 # Training parameters
-MODEL_NAME = "Dense-128-128-128-128-uniform-40-3"
-TRAINING_DATA_FILE = "training_data_uniform_500x500x10.csv"
-NUMBER_OF_EPOCHS = 40
-BATCH_SIZE = 64
+MODEL_NAME = "Dense-128-128-128-128-sequential"
+TRAINING_DATA_FILE = "training_data_sequential.csv"
+NUMBER_OF_EPOCHS = 140
+BATCH_SIZE = 128
 PREDICT_DELTA = True
 NORMALITE_DATA = True
+CUT_INVARIANTS = True

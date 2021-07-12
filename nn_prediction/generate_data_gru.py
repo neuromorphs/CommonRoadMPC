@@ -11,11 +11,17 @@ import matplotlib.pyplot as plt
 from tqdm import trange
 import os
 
+pi = math.pi
 
 track = Track()
 car = Car(track, stay_on_track=False)
 
-pi = math.pi
+MAX_YAW = pi
+MAX_SPEED = 25
+MIN_SPEED = 3
+UNWINDING_MODE = True
+
+
 
 
 def generate_distribution( number_of_initial_states = 500, number_of_trajectories = 500,number_of_steps_per_trajectory = 10):
@@ -60,7 +66,7 @@ def generate_distribution( number_of_initial_states = 500, number_of_trajectorie
     print(states.shape)
     print(states[0])
 
-    for i in trange(len(states)):
+    for i in range(len(states)):
 
         state = states[i]
         mu, sigma = 0, 0.4 # mean and standard deviation
@@ -68,8 +74,6 @@ def generate_distribution( number_of_initial_states = 500, number_of_trajectorie
         mu, sigma = 0, 0.5 # mean and standard deviation
         u1_dist = np.random.normal(mu, sigma , number_of_trajectories)
 
-        # u0_dist = np.random.uniform(-1, 1, number_of_trajectories)
-        # u1_dist = np.random.uniform(-1, 1, number_of_trajectories)
 
         controls = np.column_stack((u0_dist, u1_dist))
         results = []
@@ -80,21 +84,41 @@ def generate_distribution( number_of_initial_states = 500, number_of_trajectorie
         for j in range(number_of_trajectories):
             car.state = state   
 
-            for k in range (number_of_steps_per_trajectory):
+            for k in trange (number_of_steps_per_trajectory):
                 control = controls[j]
 
+                # unwinding => We want s curves not spirals
+                if(UNWINDING_MODE):
 
-                # if car.state[4] > 7:
-                #     control[0] = -control[0]
+                    #curves
+                    if car.state[4] > MAX_YAW:
+                        control[0] = -abs(control[0])
+                    if car.state[4] < -MAX_YAW:
+                        control[0] = abs(control[0])
 
-                # if car.state[4] > -7:
-                #      control[0] = -control[0]
+                    #speed
+                    if car.state[3] > MAX_SPEED:
+                        control[1] = -abs(control[1])
+                    if car.state[3] < MIN_SPEED:
+                        control[1] = abs(control[1])
+
+
+
 
                 state_and_control = np.append(car.state,control)
+                original_state = car.state.copy()
                 car.step(control)
-                state_and_control_and_future_state = np.append(state_and_control,car.state)
-                results.append(state_and_control_and_future_state)
 
+
+                delta = original_state - car.state
+
+
+
+                state_and_control_and_delta = np.append(state_and_control,delta)
+                results.append(state_and_control_and_delta)
+
+                # state_and_control_and_future_state = np.append(state_and_control,car.state)
+                # results.append(state_and_control_and_future_state)
 
 
             car.draw_history("data_generation.png")
@@ -106,7 +130,7 @@ def generate_distribution( number_of_initial_states = 500, number_of_trajectorie
                 
                 time_state_and_control = np.append(time, result)
 
-                #time, x1,x2,x3,x4,x5,x6,x7,u1,u2,x1n,x2n,x3n,x4n,x5n,x6n,x7n
+                #time, x1,x2,x3,x4,x5,x6,x7,u1,u2,dx1,dx2,dx3,dx4,dx5,dx6,dx7
                 writer.writerow(time_state_and_control)
                 time = round(time+0.2, 2)
 
@@ -114,5 +138,5 @@ def generate_distribution( number_of_initial_states = 500, number_of_trajectorie
 
 if __name__ == "__main__":
 
-    generate_distribution( 100, 100, 60)
+    generate_distribution( 10, 1, 10000)
 

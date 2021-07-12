@@ -17,4 +17,4 @@ test.py
 setup.sh
 
 #Neural Network Prediction
-nn_prediction/models/*
+nn_prediction/models/

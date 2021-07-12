@@ -16,7 +16,7 @@ from tqdm import trange
 def run_simulation(number_of_steps):
 
     track = Track()
-    car = Car(track)
+    car = Car(track, stay_on_track=False)
 
     # Init car controller
     # car_controller = CarController()

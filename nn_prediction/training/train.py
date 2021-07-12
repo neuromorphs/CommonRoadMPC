@@ -1,6 +1,6 @@
 import numpy as np
-from keras.models import Sequential
-from keras.layers import Dense
+from tensorflow.python.keras.models import Sequential
+from tensorflow.python.keras.layers import Dense
 from tensorflow import keras
 from sklearn import preprocessing
 import joblib
@@ -16,13 +16,16 @@ def train_network():
     nn_settings ={
         "predict_delta" : PREDICT_DELTA,
         "normalize_data": NORMALITE_DATA,
-        "model_name": MODEL_NAME
+        "model_name": MODEL_NAME,
+        "cut_invariants": CUT_INVARIANTS,
+        "epochs": NUMBER_OF_EPOCHS,
+        "batch_size": BATCH_SIZE
     }
  
 
     # load the dataset
     #time, x1,x2,x3,x4,x5,x6,x7,u1,u2,x1n,x2n,x3n,x4n,x5n,x6n,x7n
-    train_data = np.loadtxt('nn_prediction/training_data/{}'.format(TRAINING_DATA_FILE), delimiter=',')
+    train_data = np.loadtxt('nn_prediction/training/data/{}'.format(TRAINING_DATA_FILE), delimiter=',')
     print("train_data.shape", train_data.shape)
 
     # limit data for debugging
@@ -52,6 +55,9 @@ def train_network():
     delta =  y[:] - x[:,:7]
     delta_validation = y_validation[:] - x_validation[:,:7]
 
+    # Cut position away from input data
+    x = x[:,2:]
+    print("x.shape", x.shape)
     #if we want to train the network on the state changes instead of the state, use this
     if PREDICT_DELTA:
         y = delta
@@ -68,13 +74,13 @@ def train_network():
     if(NORMALITE_DATA):
         x = scaler_x.transform(x)
         y = scaler_y.transform(y)
-        x_validation = scaler_x.transform(x_validation)
-        y_validation = scaler_y.transform(y_validation)
+        # x_validation = scaler_x.transform(x_validation)
+        # y_validation = scaler_y.transform(y_validation)
 
 
     # keras model
     model = Sequential()
-    model.add(Dense(128, input_dim=9, activation='tanh'))
+    model.add(Dense(128, input_dim=7, activation='tanh'))
     model.add(Dense(128, activation='tanh'))
     model.add(Dense(128, activation='tanh'))
     model.add(Dense(128, activation='tanh'))
@@ -85,7 +91,7 @@ def train_network():
     model.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
 
     # fit
-    history = model.fit(x, y, epochs=NUMBER_OF_EPOCHS, batch_size=BATCH_SIZE, shuffle=True, validation_split=0.1,  validation_data=(x_validation, y_validation))
+    history = model.fit(x, y, epochs=NUMBER_OF_EPOCHS, batch_size=BATCH_SIZE, shuffle=True, validation_split=0.1)
 
     # Save model and normalization constants
     model_path = 'nn_prediction/models/{}'.format(MODEL_NAME)
